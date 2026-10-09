@@ -40,7 +40,7 @@
       </div>
     </header>
 
-    <section class="buddy reveal" id="buddy">
+    <section class="note reveal" id="buddy" aria-label="Mraq">
       <button class="orb" id="orb" aria-label="Mraq – klepni na mě">
         <span class="orb__glow"></span>
         <span class="orb__ball"></span>
@@ -59,22 +59,19 @@
         <span class="orb__z" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>
       </button>
       <div class="say">
-        <p class="say__who"><b>Mraq</b> <span id="moodName">…</span></p>
+        <p class="say__who"><b>Mraq</b><span id="moodName">…</span><time>teď</time></p>
         <p class="say__text" id="say" aria-live="polite"></p>
       </div>
     </section>
 
     <section class="lazy reveal" id="lazy">
-      <p class="lazy__line">Dnes je</p>
-      <p class="lazy__big" id="lazyBig">…</p>
-      <p class="lazy__line" id="lazyEnd">než včera</p>
+      <p class="lazy__line">Dnes je <b class="lazy__big" id="lazyBig">…</b> <span id="lazyEnd">než včera</span></p>
       <div class="wear" id="wear"></div>
     </section>
 
     <section class="hero reveal">
       <div class="temp" id="temp"><span id="tempNum">--</span><span class="temp__deg" aria-hidden="true">°</span></div>
       <p class="hero__cond" id="cond">&nbsp;</p>
-      <p class="hero__sub" id="condSub">&nbsp;</p>
     </section>
 
     <section class="sun reveal">

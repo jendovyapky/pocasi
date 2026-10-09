@@ -85,7 +85,7 @@ body.scrubbing .sky { transition-duration: .25s; }
 /* ---------- Layout ---------- */
 .app {
   max-width: 480px; margin: 0 auto;
-  padding: calc(var(--safe-t) + 18px) 18px calc(var(--safe-b) + 120px);
+  padding: calc(var(--safe-t) + 14px) 18px calc(var(--safe-b) + 120px);
 }
 .reveal { opacity: 0; transform: translateY(14px); filter: blur(6px); }
 body.ready .reveal {
@@ -97,8 +97,10 @@ body.ready .reveal {
 /* ---------- Hlavička ---------- */
 .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .place { text-align: left; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.place__name { font-size: 26px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70vw; }
-.place__sub { font-size: 22px; font-weight: 500; letter-spacing: -.02em; color: var(--ink-2); }
+.place__name { font-size: 19px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70vw; }
+.place__sub { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2); }
+.top .iconbtn { width: 38px; height: 38px; }
+.top .iconbtn svg { width: 18px; height: 18px; }
 .iconbtn {
   width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
   background: var(--glass); border: 1px solid var(--glass-line);
@@ -109,15 +111,16 @@ body.ready .reveal {
 .iconbtn svg { width: 20px; height: 20px; }
 
 /* ---------- Líný text ---------- */
-.lazy { margin: 22px 0 6px; font-family: var(--mono); font-size: 19px; line-height: 1.45; }
+.lazy { margin: 26px 0 0; }
 .lazy p { margin: 0; }
-.lazy__big { text-transform: uppercase; color: var(--ink-2); letter-spacing: .02em; }
+.lazy__line { font: 500 17px/1.35 var(--font); letter-spacing: -.01em; color: var(--ink-2); text-wrap: balance; }
+.lazy__big { font-weight: 700; color: var(--ink); letter-spacing: -.015em;
+  background: linear-gradient(transparent 62%, color-mix(in srgb, var(--glow) 70%, transparent) 62%, color-mix(in srgb, var(--glow) 70%, transparent) 92%, transparent 92%); }
 .lazy__big .w { display: inline-block; opacity: 0; transform: translateY(6px); filter: blur(4px); animation: word .7s var(--ease) forwards; animation-delay: calc(var(--d) * 90ms + 350ms); }
 @keyframes word { to { opacity: 1; transform: none; filter: none; } }
-.lazy__joke { margin-top: 14px !important; font-size: 14px; line-height: 1.5; color: var(--ink-2); max-width: 34ch; }
-.wear { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.wear { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .wear span {
-  font-family: var(--mono); font-size: 12px; padding: 6px 10px; border-radius: 99px;
+  font-family: var(--mono); font-size: 11.5px; padding: 5px 10px; border-radius: 99px;
   background: var(--glass); border: 1px solid var(--glass-line);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   opacity: 0; transform: scale(.9); animation: pop .5s var(--ease) forwards; animation-delay: calc(var(--d) * 60ms + 700ms);
@@ -126,12 +129,19 @@ body.ready .reveal {
 @keyframes pop { to { opacity: 1; transform: none; } }
 
 /* ---------- Mraq (maskot) ---------- */
-.buddy { display: grid; grid-template-columns: 104px 1fr; gap: 14px; align-items: center; margin-top: 22px; }
-.orb { position: relative; width: 104px; height: 104px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
+/* Mraq jako notifikace: sklo, malý orb vlevo, text vpravo */
+.note {
+  display: grid; grid-template-columns: 50px 1fr; gap: 12px; align-items: center; margin-top: 16px;
+  padding: 11px 14px 11px 11px; border-radius: 22px; cursor: pointer;
+  background: color-mix(in srgb, var(--glass) 100%, transparent); border: 1px solid var(--glass-line);
+  backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow: 0 8px 30px rgba(20, 20, 40, .08), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.orb { position: relative; width: 50px; height: 50px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
 .orb__glow, .orb__ball { position: absolute; border-radius: 50%; pointer-events: none; }
-.orb__glow { inset: -14px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .55; filter: blur(14px); }
+.orb__glow { inset: -8px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .5; filter: blur(8px); }
 .orb__ball {
-  inset: 2px; filter: blur(5px);
+  inset: 1px; filter: blur(2.5px);
   background: radial-gradient(circle at 42% 34%, color-mix(in srgb, #fff 55%, var(--orb)) 0%, var(--orb) 46%, color-mix(in srgb, var(--orb) 80%, #000 10%) 72%, transparent 76%);
 }
 .orb__face { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -147,29 +157,31 @@ body.ready .reveal {
 .orb.shake { animation: shake .55s linear; }
 .orb.shiver { animation: shiver .9s linear; }
 .orb.tilt { animation: tilt .9s var(--ease); }
-@keyframes hop { 30% { transform: translateY(-14px) scale(1.04, .97); } 55% { transform: translateY(0) scale(1.06, .92); } 75% { transform: translateY(-3px); } }
+@keyframes hop { 30% { transform: translateY(-7px) scale(1.04, .97); } 55% { transform: translateY(0) scale(1.06, .92); } 75% { transform: translateY(-2px); } }
 @keyframes shake { 20%, 60% { transform: translateX(-5px) rotate(-3deg); } 40%, 80% { transform: translateX(5px) rotate(3deg); } }
 @keyframes shiver { 0%, 100% { transform: none; } 10%, 30%, 50%, 70%, 90% { transform: translateX(-1.5px); } 20%, 40%, 60%, 80% { transform: translateX(1.5px); } }
 @keyframes tilt { 40% { transform: rotate(-10deg); } }
 .orb { animation: breathe 5s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: scale(1.025, .985) translateY(1px); } }
-.orb__z { position: absolute; right: -2px; top: -4px; pointer-events: none; font: 600 14px var(--mono); color: var(--ink-2); opacity: 0; }
+.orb__z { position: absolute; right: -4px; top: -6px; pointer-events: none; font: 600 10px var(--mono); color: var(--ink-2); opacity: 0; }
 .orb.sleep .orb__z { opacity: 1; }
 .orb__z i { position: absolute; font-style: normal; animation: zz 3s ease-in infinite; opacity: 0; }
-.orb__z i:nth-child(2) { animation-delay: 1s; font-size: 12px; }
-.orb__z i:nth-child(3) { animation-delay: 2s; font-size: 17px; }
+.orb__z i:nth-child(2) { animation-delay: 1s; font-size: 9px; }
+.orb__z i:nth-child(3) { animation-delay: 2s; font-size: 12px; }
 @keyframes zz { 0% { opacity: 0; transform: translate(0, 10px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(14px, -22px); } }
 .say { min-width: 0; }
-.say__who { margin: 0 0 4px; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.say__who { margin: 0 0 2px; display: flex; align-items: baseline; gap: 6px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .09em; color: var(--ink-2); }
 .say__who b { color: var(--ink); font-weight: 600; }
-.say__text { margin: 0; font: 16px/1.4 var(--mono); min-height: 4.2em; text-wrap: pretty; }
+.say__who span::before { content: '· '; }
+.say__who time { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.say__text { margin: 0; font: 450 14.5px/1.38 var(--font); letter-spacing: -.005em; min-height: 2.76em; text-wrap: pretty; }
 .say__text .caret { display: inline-block; width: .55em; height: 1.05em; margin-left: 1px; vertical-align: -.15em; background: var(--ink); animation: caret .9s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
 
 /* ---------- Hero teplota ---------- */
-.hero { text-align: center; margin-top: 26px; }
+.hero { text-align: center; margin-top: 22px; }
 .temp {
-  font-family: var(--dot); font-weight: 900; font-size: clamp(112px, 36vw, 156px);
+  font-family: var(--dot); font-weight: 900; font-size: clamp(100px, 31vw, 136px);
   line-height: .9; letter-spacing: -.04em; display: inline-block; position: relative;
   font-variant-numeric: tabular-nums;
 }
@@ -177,11 +189,10 @@ body.ready .reveal {
 .temp__deg { position: absolute; left: 100%; top: .06em; font-size: .45em; line-height: 1; margin-left: .04em; }
 .temp.tick #tempNum { animation: flick .28s steps(3); }
 @keyframes flick { 0% { opacity: .35; } 50% { opacity: .8; } 100% { opacity: 1; } }
-.hero__cond { margin: 10px 0 0; font-size: 20px; font-weight: 500; letter-spacing: -.01em; }
-.hero__sub { margin: 2px 0 0; font-size: 15px; color: var(--ink-2); }
+.hero__cond { margin: 8px 0 0; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--ink-2); }
 
 /* ---------- Slunce ---------- */
-.sun { margin-top: 22px; }
+.sun { margin-top: 10px; }
 .sun__svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; cursor: ew-resize; }
 .sun__horizon { stroke: var(--ink-3); stroke-width: 1; }
 .sun__arc { stroke: var(--ink); stroke-width: 2; }
@@ -201,13 +212,13 @@ body.scrubbing #sunDot { transition-duration: .12s; }
 #arc { stroke-dasharray: 400; stroke-dashoffset: 400; }
 body.ready #arc { animation: draw 1.6s .4s var(--ease) forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
-.sun__row { display: grid; grid-template-columns: 1fr 1.6fr 1fr; align-items: end; margin-top: 8px; }
-.sun__row b { display: block; font-size: 24px; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.sun__row span { display: block; font-size: 15px; color: var(--ink-2); }
+.sun__row { display: grid; grid-template-columns: 1fr 1.6fr 1fr; align-items: end; margin-top: 4px; }
+.sun__row b { display: block; font-size: 19px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.sun__row span { display: block; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2); margin-top: 2px; }
 .sun__mid { text-align: center; }
 .sun__mid b { font-size: 15px; height: 22px; }
 .sun__mid b svg { width: 20px; height: 20px; }
-.sun__mid span { font-size: 13px; white-space: nowrap; }
+.sun__mid span { white-space: nowrap; }
 .right { text-align: right; }
 .dotglyph { font-family: var(--dot); font-weight: 900; letter-spacing: -.05em; }
 

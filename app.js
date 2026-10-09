@@ -462,7 +462,6 @@ function renderAt(f) {
   $('#cond').textContent = WMO[code] ?? '—';
   const feels = Math.round(isNow && state.data.current ? state.data.current.apparent_temperature : at(H.feels, f));
   const wind = Math.round(at(H.wind, f));
-  $('#condSub').textContent = `Pocitově ${feels}° · vítr ${wind} km/h · ${Math.round(at(H.hum, f))} % vlhkost`;
 
   // chip
   const d = new Date(ms), nowD = new Date(nowLocal());
@@ -1002,6 +1001,7 @@ function wire() {
   $('#wave').addEventListener('click', (e) => { const w = e.target.closest('i'); if (w) setScrollFor(state.i0 + +w.dataset.k / 2, true); });
   $('#moodBest').onclick = () => state.best && setScrollFor(state.best.f, true);
   wireSunDrag();
+  $('#buddy').addEventListener('click', (e) => { if (!e.target.closest('#orb')) mraq?.react(); });
   // při návratu do appky obnov, pokud jsou data starší než 10 min
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !state.place || Date.now() - (state.lastFetch || 0) < 10 * 60e3) return;
