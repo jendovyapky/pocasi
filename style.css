@@ -509,6 +509,7 @@ body.scrubbing .dial__chip { transform: translateX(-50%) scale(1.08); }
 .radar__attr a { color: inherit; }
 .radar__note { margin: 8px 0 0; font: 12px/1.5 var(--mono); color: rgba(244,241,234,.75); min-height: 3em; }
 .radar .leaflet-layer, .radar .rv { transition: opacity .35s linear; }
+.radar .rv-model { filter: blur(10px); transition: opacity .25s linear; image-rendering: auto; }
 .radar .leaflet-control-attribution { background: rgba(22,24,29,.6); color: rgba(244,241,234,.55); font-size: 9px; }
 .radar .leaflet-control-attribution a { color: rgba(244,241,234,.75); }
 .radar .leaflet-bottom.leaflet-right { bottom: auto; top: calc(var(--safe-t) + 112px); }

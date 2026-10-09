@@ -510,8 +510,9 @@ function renderAt(f) {
 
   // chip
   const d = new Date(ms), nowD = new Date(nowLocal());
-  const tomorrow = dayKey(ms) !== dayKey(nowLocal());
-  $('#chip').textContent = isNow ? 'teď' : `${tomorrow ? 'zítra ' : ''}${d.getUTCHours()}:${pad2(Math.floor(d.getUTCMinutes() / 15) * 15)}`;
+  const dd = Math.round((Date.parse(dayKey(ms)) - Date.parse(dayKey(nowLocal()))) / 864e5);
+  const dayLbl = dd === 0 ? '' : dd === 1 ? 'zítra ' : `${DNY[d.getUTCDay()]} `;
+  $('#chip').textContent = isNow ? 'teď' : `${dayLbl}${d.getUTCHours()}:${pad2(Math.floor(d.getUTCMinutes() / 15) * 15)}`;
 
   // pohoda
   const m = mood(f);
@@ -677,12 +678,12 @@ function togglePlay() {
   const sc = $('#scroller');
   const startX = sc.scrollLeft, endX = sc.scrollWidth - sc.clientWidth;
   const from = startX >= endX - 2 ? 0 : startX;
-  const dur = 9000 * (1 - from / endX) + 600;
+  const dur = (endX - from) / W * 450 + 400; // ~0,45 s na hodinu, ať se dá sledovat
   const t0 = performance.now();
   $('#playIco').innerHTML = '<path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor" stroke="none"/>';
   const step = (now) => {
     const k = clamp((now - t0) / dur, 0, 1);
-    const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const e = k < .06 ? k * k / .12 : k > .94 ? 1 - (1 - k) * (1 - k) / .12 : k; // skoro rovnoměrně, jen jemný rozjezd a dojezd
     sc.scrollLeft = lerp(from, endX, e);
     if (k < 1 && playing) playing = requestAnimationFrame(step); else stopPlay();
   };
@@ -697,7 +698,7 @@ function stopPlay() {
 /* ---------------- Radar (RainViewer: jen minulé 2 h) + předpověď pro moje místo ----------------
    Časová osa: −2 h … teď = skutečný radar na mapě, teď … +3 h = model ICON-D2 po 15 min,
    ale jen pro vybrané místo (RainViewer od 2026 nowcast nedává). */
-const R = { map: null, marker: null, layers: [], frames: [], host: '', sel: 0, t0: 0, t1: 0, play: 0, shown: -1, loadedAt: 0, motion: null, shiftMs: 0 };
+const R = { map: null, marker: null, layers: [], frames: [], host: '', sel: 0, t0: 0, t1: 0, play: 0, shown: -1, loadedAt: 0, motion: null, shiftMs: 0, model: [], modelAt: 0, modelKey: '' };
 let leafletReady;
 function loadLeaflet() {
   if (leafletReady) return leafletReady;
@@ -763,6 +764,7 @@ async function openRadar() {
       buildTimeline();
       estimateMotion();
     }
+    loadModelGrid();
     setRadarTime(Date.now(), true); // otevře se na „teď“ a stojí; přehrát si to pustíš sám
   } catch {
     $('#radarRel').textContent = 'mapa se nenačetla – jsi online?';
@@ -851,6 +853,61 @@ function preloadNext() { // přidá na mapu další (starší) snímek, který j
     if (!R.ready[k]) return; // počkej, až se dotáhne ten předchozí
   }
 }
+/* ---------------- Předpověď srážek na mapě (model ICON přes Open-Meteo) ----------------
+   RainViewer budoucnost nedává, tak si ji poskládáme sami: mřížka 11×13 bodů kolem místa,
+   pro každý bod srážky po 15 min na 3 h dopředu (jeden request), z toho barevná vrstva na mapu. */
+const RAIN_STOPS = [[0.1, [150, 225, 240, .45]], [0.5, [98, 184, 232, .6]], [1, [43, 143, 216, .7]], [2.5, [15, 99, 196, .78]], [5, [255, 216, 74, .82]], [10, [255, 140, 26, .85]], [20, [240, 48, 60, .88]], [40, [214, 31, 214, .9]]];
+function rainColor(mmh) {
+  if (mmh < 0.1) return null;
+  for (let k = RAIN_STOPS.length - 1; k >= 0; k--) {
+    if (mmh >= RAIN_STOPS[k][0]) {
+      const [v0, c0] = RAIN_STOPS[k], [v1, c1] = RAIN_STOPS[k + 1] || RAIN_STOPS[k];
+      const t = v1 > v0 ? clamp((mmh - v0) / (v1 - v0), 0, 1) : 0;
+      return c0.map((c, i) => lerp(c, c1[i], t));
+    }
+  }
+  return null;
+}
+async function loadModelGrid() {
+  const L = window.L; if (!L || !R.map) return;
+  const key = `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}`;
+  if (R.model.length && R.modelKey === key && Date.now() - R.modelAt < 10 * 60e3) return;
+  const NX = 11, NY = 13, dLon = 0.5, dLat = 0.42;
+  const lats = [], lons = [];
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+    lats.push((state.place.lat + (j - (NY - 1) / 2) * dLat).toFixed(2));
+    lons.push((state.place.lon + (i - (NX - 1) / 2) * dLon).toFixed(2));
+  }
+  try {
+    const q = `latitude=${lats.join(',')}&longitude=${lons.join(',')}&minutely_15=precipitation&forecast_minutely_15=14&past_minutely_15=1&timezone=GMT`;
+    const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?${q}`)).json();
+    const arr = Array.isArray(j) ? j : [j];
+    if (arr.length !== NX * NY || !arr[0].minutely_15) return;
+    const times = arr[0].minutely_15.time.map((s) => parseLocal(s)); // GMT → přímo epocha
+    const small = document.createElement('canvas'); small.width = NX; small.height = NY;
+    const sg = small.getContext('2d');
+    const big = document.createElement('canvas'); big.width = NX * 28; big.height = NY * 28;
+    const bg = big.getContext('2d'); bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'high';
+    R.model.forEach((m) => R.map.removeLayer(m.layer));
+    const south = state.place.lat - ((NY - 1) / 2 + .5) * dLat, north = state.place.lat + ((NY - 1) / 2 + .5) * dLat;
+    const west = state.place.lon - ((NX - 1) / 2 + .5) * dLon, east = state.place.lon + ((NX - 1) / 2 + .5) * dLon;
+    R.model = times.map((t, k) => {
+      const img = sg.createImageData(NX, NY);
+      for (let jj = 0; jj < NY; jj++) for (let ii = 0; ii < NX; ii++) {
+        const v = (arr[jj * NX + ii].minutely_15.precipitation[k] ?? 0) * 4; // mm/h
+        const c = rainColor(v); const o = ((NY - 1 - jj) * NX + ii) * 4; // sever nahoře
+        if (c) { img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = c[3] * 255; }
+      }
+      sg.putImageData(img, 0, 0);
+      bg.clearRect(0, 0, big.width, big.height); bg.drawImage(small, 0, 0, big.width, big.height);
+      const layer = L.imageOverlay(big.toDataURL('image/png'), [[south, west], [north, east]], { opacity: 0, className: 'rv-model', interactive: false }).addTo(R.map);
+      return { t, layer };
+    });
+    R.modelAt = Date.now(); R.modelKey = key;
+    setRadarTime(R.sel, true);
+  } catch {}
+}
+
 function closeRadar() {
   const el = $('#radarSheet'); el.classList.add('closing');
   stopRadar();
@@ -889,7 +946,16 @@ function setRadarTime(t, force) {
   // v budoucnu: poslední snímek posunutý podle odhadnutého pohybu, postupně slábne (čím dál, tím nejistější)
   const ahead = isFuture ? R.sel - lastFrame : 0;
   R.shiftMs = R.motion ? ahead : 0;
-  const futOp = R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
+  const hasModel = R.model.length > 0;
+  // s modelem: posunutý radar během první půlhodiny plynule přejde do předpovědi modelu
+  const futOp = hasModel ? clamp(0.8 * (1 - ahead / (40 * 60e3)), 0, 0.8) : R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
+  if (hasModel) {
+    const mFade = isFuture ? clamp(ahead / (25 * 60e3), 0, 1) * 0.85 : 0;
+    let k = 0; while (k < R.model.length - 1 && R.model[k + 1].t <= R.sel) k++;
+    const a0 = R.model[k], a1 = R.model[k + 1] || a0;
+    const w = a1 === a0 ? 0 : clamp((R.sel - a0.t) / (a1.t - a0.t), 0, 1);
+    R.model.forEach((m, i) => m.layer.setOpacity(i === k ? mFade * (1 - w) : m === a1 ? mFade * w : 0));
+  }
   if (idx !== R.shown || force) {
     R.layers.forEach((l, k) => l.setOpacity(k === idx ? (isFuture ? futOp : 0.8) : 0));
     R.shown = idx;
@@ -904,7 +970,9 @@ function setRadarTime(t, force) {
     $('#radarTime').textContent = placeTime(R.sel);
     $('#radarRel').textContent = `za ${mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`}`;
     $('#nowcastNote').textContent = slot
-      ? `${slot.p >= 0.02 ? T('radar.u-tebe', { co: intensity(slot.p), mm: fmtMm(slot.p) }, 'U tebe {co} · {mm} mm za 15 min.') : T('radar.u-tebe-sucho', {}, 'U tebe sucho.')} ${R.motion && speedKmh() >= 3
+      ? `${slot.p >= 0.02 ? T('radar.u-tebe', { co: intensity(slot.p), mm: fmtMm(slot.p) }, 'U tebe {co} · {mm} mm za 15 min.') : T('radar.u-tebe-sucho', {}, 'U tebe sucho.')} ${hasModel
+        ? T('radar.model', {}, 'Mapa: předpověď modelu ICON po 15 minutách.')
+        : R.motion && speedKmh() >= 3
         ? T('radar.pohyb', { smer: dirName(), rychlost: speedKmh() }, 'Mapa: odhad, srážky se posouvají {smer} asi {rychlost} km/h.')
         : T('radar.stoji', {}, 'Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.')}`
       : T('radar.bez-dat', {}, 'Předpověď po 15 minutách teď není k dispozici.');

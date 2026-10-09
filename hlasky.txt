@@ -207,6 +207,7 @@ dest.sucho-do = Do {cas} sucho, pak to začne.
 radar.u-tebe = {co} · {mm} mm za 15 min.
 radar.u-tebe-sucho = Zatim sucho. Buď rád.
 radar.pohyb = Mapa: mraky letí {smer} rychlostí {rychlost} km/h.
+radar.model = Mapa: předpověď modelu ICON po 15 minutách.
 radar.stoji = Mapa: déšť tu prostě zaparkoval a stojí.
 radar.bez-dat = Server mlčí. Po 15 minutách radši neplánuj.
 radar.bez-predpovedi = Modrá je minulost. Posuň osu do budoucna a zjisti svůj osud.
