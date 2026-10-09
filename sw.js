@@ -1,5 +1,5 @@
 // Service worker: appka startuje okamžitě z cache (žádná černá obrazovka), na pozadí si stáhne novou verzi → projeví se při dalším otevření.
-const VERSION = 'mraq-v26';
+const VERSION = 'mraq-v27';
 const SHELL = ['./', 'style.css', 'app.js', 'mraq.js', 'intro.js', 'hlasky.txt', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/mraq.svg'];
 
 // Cloudflare Pages přesměrovává /index.html → / . Safari odmítne stránku, kterou service worker vrátí
