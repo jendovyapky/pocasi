@@ -535,9 +535,9 @@ function sunTimeFromPoint(x, y) {
   let best = null;
   for (const [id, p] of paths) {
     const len = p.getTotalLength();
-    for (let k = 0; k <= 60; k++) {
-      const pt = p.getPointAtLength((len * k) / 60), d = (pt.x - x) ** 2 + (pt.y - y) ** 2;
-      if (!best || d < best.d) best = { id, u: k / 60, d };
+    for (let k = 0; k <= 240; k++) {
+      const pt = p.getPointAtLength((len * k) / 240), d = (pt.x - x) ** 2 + (pt.y - y) ** 2;
+      if (!best || d < best.d) best = { id, u: k / 240, d };
     }
   }
   const selMs = at(H.t, state.sel ?? state.nowF);
@@ -551,22 +551,32 @@ function sunTimeFromPoint(x, y) {
   };
   let ms = toMs(di0);
   const now = nowLocal();
-  if (ms != null && ms < now - 10 * 60e3) { const next = toMs(di0 + 1); if (next != null && (best.id !== 'R' || ms < now - HOUR)) ms = next; }
+  if (ms != null && ms < now) {
+    // do minulosti to nejde: ve dne se sluníčko zastaví na „teď“, zítřek jen když táhneš do noci/rána, které už dnes byly
+    const { di: dn } = sunPhase(now);
+    const daytimeNow = now >= D.sunrise[dn] && now <= D.sunset[dn];
+    if (daytimeNow && best.id === 'arc') ms = now;
+    else if (best.id === 'R' && ms > now - HOUR) ms = now;
+    else { const next = toMs(di0 + 1); ms = next ?? now; }
+  }
   if (ms == null) return null;
   return clamp((ms - H.t[0]) / HOUR, state.nowF, state.i0 + state.span);
 }
 function wireSunDrag() {
   const svg = $('#sunSvg'), dot = $('#sunDot');
-  let dragging = false;
+  let dragging = false, start = null;
   const move = (e) => {
     if (!dragging || !state.data) return;
+    // malé cuknutí při chycení ignoruj, ať sluníčko neuskočí
+    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8) return;
+    start = null;
     const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
     const p = pt.matrixTransform(svg.getScreenCTM().inverse());
     const f = sunTimeFromPoint(p.x, p.y);
     if (f != null) { stopPlay(); setScrollFor(f, false); }
   };
   dot.addEventListener('pointerdown', (e) => {
-    dragging = true; dot.setPointerCapture(e.pointerId);
+    dragging = true; start = { x: e.clientX, y: e.clientY }; dot.setPointerCapture(e.pointerId);
     document.body.classList.add('sundrag'); navigator.vibrate?.(6); e.preventDefault();
   });
   dot.addEventListener('pointermove', move);
