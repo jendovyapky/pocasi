@@ -1,0 +1,19 @@
+# Mraq – server pro notifikace (Cloudflare Worker)
+# Nasazuje se automaticky z GitHubu (Workers Builds, kořenový adresář „push“).
+name = "mraq-push"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
+
+# Každých 15 minut zkontroluje počasí pro všechny přihlášené telefony
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Úložiště přihlášených telefonů + VAPID klíče (Worker si je vygeneruje sám)
+[[kv_namespaces]]
+binding = "SUBS"
+id = "KV_ID_DOPLNIT"
+
+[vars]
+APP_URL = "https://mraq.jendovyapky.eu"
+CONTACT = "mailto:jendovyapky@gmail.com"

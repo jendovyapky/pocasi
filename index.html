@@ -40,10 +40,22 @@
       </div>
     </header>
 
-    <section class="note reveal" id="buddy" aria-label="Mraq">
+    <section class="buddy reveal" id="buddy" aria-label="Mraq">
       <button class="orb" id="orb" aria-label="Mraq – klepni na mě">
         <span class="orb__glow"></span>
+        <span class="fx fx--back" aria-hidden="true">
+          <i class="fx-sun"></i>
+          <i class="fx-moon"></i>
+          <i class="fx-stars"><b></b><b></b><b></b></i>
+        </span>
         <span class="orb__ball"></span>
+        <span class="fx fx--front" aria-hidden="true">
+          <i class="fx-drops"><b></b><b></b><b></b><b></b><b></b></i>
+          <i class="fx-flakes"><b></b><b></b><b></b><b></b><b></b></i>
+          <i class="fx-bolt"><svg viewBox="0 0 24 24"><path d="M13.5 2 5 13.5h6L9.5 22 19 9.5h-6.2z"/></svg></i>
+          <i class="fx-wind"><b></b><b></b><b></b></i>
+          <i class="fx-fog"><b></b><b></b></i>
+        </span>
         <svg class="orb__face" viewBox="0 0 120 120" aria-hidden="true">
           <ellipse class="orb__blush" id="blushL" cx="36" cy="66" rx="9" ry="5"/>
           <ellipse class="orb__blush" id="blushR" cx="84" cy="66" rx="9" ry="5"/>
@@ -59,7 +71,7 @@
         <span class="orb__z" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>
       </button>
       <div class="say">
-        <p class="say__who"><b>Mraq</b><span id="moodName">…</span><time>teď</time></p>
+        <p class="say__who"><b>Mraq</b><span id="moodName">…</span></p>
         <p class="say__text" id="say" aria-live="polite"></p>
       </div>
     </section>
@@ -130,6 +142,11 @@
 
     <section class="week reveal" id="week" aria-label="Další dny"></section>
 
+    <button class="setbtn reveal" id="settingsBtn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      Nastavení
+    </button>
+
     <footer class="foot reveal">
       <b>Mraq</b> · Předpověď <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (ICON-D2, ECMWF) ·
       Radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Weather data by RainViewer</a><br>
@@ -190,6 +207,50 @@
       </div>
       <p class="radar__note" id="nowcastNote">&nbsp;</p>
       <p class="radar__attr">Mapa © Esri · Radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Weather data by RainViewer</a></p>
+    </div>
+  </div>
+
+  <!-- Nastavení -->
+  <div class="sheet" id="settingsSheet" hidden>
+    <div class="sheet__panel set">
+      <div class="sheet__grab"></div>
+      <div class="set__head">
+        <h2>Nastavení</h2>
+        <button class="set__close" id="settingsClose" aria-label="Zavřít"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+
+      <h3 class="set__title">Notifikace</h3>
+      <div class="set__group">
+        <label class="set__row">
+          <span><b>Ranní shrnutí</b><small>teplota, co si vzít a jestli bude pršet</small></span>
+          <input type="time" id="nMorningTime" value="07:00" step="900">
+          <input type="checkbox" class="sw" id="nMorning">
+        </label>
+        <label class="set__row">
+          <span><b>Déšť za chvíli</b><small>když má do hodiny začít pršet (7–22 h)</small></span>
+          <input type="checkbox" class="sw" id="nRain">
+        </label>
+        <label class="set__row">
+          <span><b>Extrémy na zítřek</b><small>bouřka, vichr, vedro, mráz, sníh · v 19:00</small></span>
+          <input type="checkbox" class="sw" id="nExtreme">
+        </label>
+      </div>
+      <p class="set__hint" id="notifHint"></p>
+      <button class="set__btn" id="notifTest" hidden>Poslat zkušební notifikaci</button>
+
+      <h3 class="set__title">Místo</h3>
+      <div class="set__group">
+        <label class="set__row"><span><b>Podle polohy</b><small>zjistí se při každém otevření</small></span><input type="radio" name="placeMode" value="auto" id="pmAuto"></label>
+        <label class="set__row"><span><b>Pořád stejné místo</b><small id="pmFixedName">—</small></span><input type="radio" name="placeMode" value="fixed" id="pmFixed"></label>
+      </div>
+
+      <h3 class="set__title">Appka</h3>
+      <div class="set__group">
+        <label class="set__row"><span><b>Mraq na hlavní obrazovce</b></span><input type="checkbox" class="sw" id="sMraq"></label>
+        <label class="set__row"><span><b>Vibrace</b><small>při posouvání času</small></span><input type="checkbox" class="sw" id="sVibrate"></label>
+        <label class="set__row"><span><b>Úsporné animace</b><small>méně pohybu, šetří baterku</small></span><input type="checkbox" class="sw" id="sLite"></label>
+      </div>
+      <p class="set__about" id="setAbout">Mraq</p>
     </div>
   </div>
 

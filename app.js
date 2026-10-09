@@ -410,9 +410,27 @@ function mascotCtx(f) {
     stav: (WMO[isNow && c ? c.weather_code : H.code[i]] || '').toLowerCase(), misto: state.place.name,
   };
 }
+function weatherFx(f) { // animace kolem Mraqa podle počasí
+  const H = state.data.hourly;
+  const i = Math.round(clamp(f, 0, H.t.length - 1));
+  const code = H.code[i], k = kind(code), rain = at(H.precip, f);
+  const { t } = sunPhase(at(H.t, f));
+  const night = t < 0 || t > 1;
+  const fx = [];
+  if (k === 'storm') fx.push('storm');
+  else if (k === 'snow') fx.push('snow');
+  else if (k === 'rain') fx.push(code >= 61 || rain >= 0.3 ? 'rain' : 'drizzle');
+  else if (k === 'fog') fx.push('fog');
+  else if (night) fx.push('moon');
+  else if (k === 'clear') fx.push('sun');
+  else if (k === 'part') fx.push('sun', 'small');
+  if (at(H.wind, f) >= 32 || (at(H.gust, f) || 0) >= 55) fx.push('wind');
+  return fx.join(' ');
+}
 let mascotT = 0;
 function updateMascot(f, first) {
   if (!mraq) return;
+  mraq.setFx(weatherFx(f));
   const key = mascotMood(f);
   if (first) return mraq.set(key, mascotCtx(f), { seed: hashStr(dayKey(nowLocal()) + state.place.name) });
   clearTimeout(mascotT);
@@ -935,9 +953,127 @@ async function search(q) {
   });
 }
 
+
+/* ---------------- Nastavení + notifikace ---------------- */
+const PUSH_API = 'https://mraq-api.jendovyapky.eu';
+const DEF_SETTINGS = { mraq: true, vibrate: true, lite: false, placeMode: 'auto', fixed: null, notif: { morning: false, time: '07:00', rain: false, extreme: false }, pushKey: '' };
+const settings = () => { const s = load().settings || {}; return { ...DEF_SETTINGS, ...s, notif: { ...DEF_SETTINGS.notif, ...(s.notif || {}) } }; };
+const saveSettings = (patch) => save({ settings: { ...settings(), ...patch } });
+const notifOn = (n = settings().notif) => n.morning || n.rain || n.extreme;
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function applySettings() {
+  const s = settings();
+  document.body.classList.toggle('no-mraq', !s.mraq);
+  document.body.classList.toggle('lite', s.lite);
+}
+function hint(t) { $('#notifHint').textContent = t || ''; }
+function notifStatus() {
+  const n = settings().notif;
+  if (!notifOn(n)) { hint(''); $('#notifTest').hidden = true; return; }
+  const parts = [n.morning && `ráno v ${n.time}`, n.rain && 'déšť do hodiny', n.extreme && 'extrémy v 19:00'].filter(Boolean);
+  hint(`Zapnuto pro ${state.place?.name || 'tvoje místo'}: ${parts.join(', ')}.`);
+  $('#notifTest').hidden = false;
+}
+function openSettings() {
+  const s = settings();
+  $('#nMorning').checked = s.notif.morning; $('#nMorningTime').value = s.notif.time;
+  $('#nRain').checked = s.notif.rain; $('#nExtreme').checked = s.notif.extreme;
+  $('#pmAuto').checked = s.placeMode !== 'fixed'; $('#pmFixed').checked = s.placeMode === 'fixed';
+  $('#pmFixedName').textContent = s.placeMode === 'fixed' && s.fixed ? s.fixed.name : `${state.place?.name || '—'} (to, co máš teď otevřené)`;
+  $('#sMraq').checked = s.mraq; $('#sVibrate').checked = s.vibrate; $('#sLite').checked = s.lite;
+  $('#setAbout').innerHTML = `Mraq · předpověď Open-Meteo · radar RainViewer<br>Hlášky si píše Honza.`;
+  notifStatus();
+  openSheet('#settingsSheet');
+}
+const b64uToBytes = (s) => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
+async function enablePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    hint(isIOS && !standalone()
+      ? 'Na iPhonu jdou notifikace jen z plochy: v Safari Sdílet → Přidat na plochu, pak otevři Mraq z plochy a zapni to tady.'
+      : 'Tenhle prohlížeč notifikace neumí.');
+    return null;
+  }
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+  if (perm !== 'granted') { hint('Notifikace máš pro Mraq zakázané. Povol je v nastavení telefonu (Oznámení → Mraq).'); return null; }
+  hint('Zapínám…');
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    const { key } = await (await fetch(`${PUSH_API}/vapid`)).json();
+    sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(key) });
+  }
+  return sub;
+}
+async function syncPush(sub) {
+  try {
+    if (!sub) { const reg = await navigator.serviceWorker?.ready; sub = await reg?.pushManager?.getSubscription(); }
+    if (!sub || !state.place) return false;
+    const r = await fetch(`${PUSH_API}/subscribe`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sub: sub.toJSON(), place: { lat: state.place.lat, lon: state.place.lon, name: state.place.name }, prefs: settings().notif }),
+    });
+    if (!r.ok) throw new Error(r.status);
+    saveSettings({ pushKey: `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}|${JSON.stringify(settings().notif)}` });
+    return true;
+  } catch { hint('Server s notifikacemi teď neodpovídá. Zkus to za chvíli.'); return false; }
+}
+async function disablePush() {
+  try {
+    const reg = await navigator.serviceWorker?.ready; const sub = await reg?.pushManager?.getSubscription();
+    if (sub) {
+      fetch(`${PUSH_API}/unsubscribe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sub: sub.toJSON() }) }).catch(() => {});
+      await sub.unsubscribe();
+    }
+  } catch {}
+}
+async function onNotifChange(e) {
+  const notif = { morning: $('#nMorning').checked, time: $('#nMorningTime').value || '07:00', rain: $('#nRain').checked, extreme: $('#nExtreme').checked };
+  const was = notifOn();
+  if (!notifOn(notif)) { saveSettings({ notif }); notifStatus(); if (was) disablePush(); return; }
+  const sub = await enablePush();
+  if (!sub) { if (e?.target?.type === 'checkbox') e.target.checked = false; return; }
+  saveSettings({ notif });
+  if (await syncPush(sub)) notifStatus();
+}
+function maybeSyncPush() { // po načtení počasí: když se změnilo místo, pošli ho serveru
+  const s = settings();
+  if (!notifOn(s.notif) || !state.place) return;
+  const key = `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}|${JSON.stringify(s.notif)}`;
+  if (key !== s.pushKey) syncPush();
+}
+function wireSettings() {
+  $('#settingsBtn').onclick = openSettings;
+  $('#settingsClose').onclick = () => closeSheet('#settingsSheet');
+  for (const id of ['#nMorning', '#nRain', '#nExtreme']) $(id).addEventListener('change', onNotifChange);
+  $('#nMorningTime').addEventListener('change', () => { if ($('#nMorning').checked) onNotifChange(); else saveSettings({ notif: { ...settings().notif, time: $('#nMorningTime').value } }); });
+  $('#notifTest').onclick = async () => {
+    hint('Posílám…');
+    try {
+      const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+      const r = await (await fetch(`${PUSH_API}/test`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sub: sub.toJSON() }) })).json();
+      hint(r.ok ? 'Odesláno. Za pár vteřin by měla cinknout.' : `Nepovedlo se (${r.status || r.error}).`);
+    } catch { hint('Nepovedlo se. Jsou notifikace zapnuté?'); }
+  };
+  $('#sMraq').onchange = (e) => { saveSettings({ mraq: e.target.checked }); applySettings(); };
+  $('#sVibrate').onchange = (e) => saveSettings({ vibrate: e.target.checked });
+  $('#sLite').onchange = (e) => { saveSettings({ lite: e.target.checked }); applySettings(); };
+  $('#pmFixed').onchange = () => { saveSettings({ placeMode: 'fixed', fixed: { ...state.place, auto: false } }); $('#pmFixedName').textContent = state.place.name; };
+  $('#pmAuto').onchange = async () => {
+    saveSettings({ placeMode: 'auto', fixed: null });
+    const p = await useMyLocation(false);
+    if (p) setPlace(p);
+  };
+  // vibrace jdou vypnout
+  try { const orig = navigator.vibrate?.bind(navigator); if (orig) navigator.vibrate = (p) => (settings().vibrate ? orig(p) : false); } catch {}
+}
+
 /* ---------------- Hlavní tok ---------------- */
 async function setPlace(place) {
   state.place = place; save({ place });
+  if (settings().placeMode === 'fixed') saveSettings({ fixed: { ...place, auto: false } });
   $('#placeName').textContent = place.name;
   await refresh();
 }
@@ -947,6 +1083,7 @@ async function refresh() {
     const [raw, mraw] = await Promise.all([fetchForecast(lat, lon), fetchMinutely(lat, lon).catch(() => null)]);
     save({ cache: { raw, mraw, at: Date.now(), key: `${lat},${lon}` } });
     ingest(raw, mraw);
+    maybeSyncPush();
   } catch (e) {
     const c = load().cache;
     if (c && c.key === `${lat},${lon}`) { ingest(c.raw, c.mraw); toast(T('hlaska.offline', {}, 'Jsi offline. Ukazuju poslední známou předpověď.')); }
@@ -1013,14 +1150,17 @@ function wire() {
 let mraq = null;
 async function boot() {
   mraq = createMraq();
+  applySettings();
   wire();
+  wireSettings();
   await loadLines();
   const saved = load();
   // 1) okamžitě ukaž poslední data z cache
   if (saved.place && saved.cache) { state.place = saved.place; try { ingest(saved.cache.raw, saved.cache.mraw); } catch {} }
   // 2) poloha se zjišťuje při každém otevření, ale ptá se jen poprvé (ručně vybrané město platí do zavření appky)
-  const p = await autoLocate();
-  state.place = p || (saved.place && { ...saved.place, auto: true }) || DEFAULT_PLACE;
+  const st = settings();
+  const p = st.placeMode === 'fixed' && st.fixed ? null : await autoLocate();
+  state.place = (st.placeMode === 'fixed' && st.fixed) || p || (saved.place && { ...saved.place, auto: true }) || DEFAULT_PLACE;
   save({ place: state.place });
   await refresh();
 }

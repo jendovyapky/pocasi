@@ -209,6 +209,7 @@ export function createMraq() {
       el.name.textContent = MOODS[mood].name;
       if (speak && (changed || !el.say.textContent)) { type(prefix + nextLine(mood, seed)); if (changed) run(TAP[mood]); }
     },
+    setFx(fx) { if (orb.dataset.fx !== fx) orb.dataset.fx = fx; },
     react() { run(TAP[mood]); type(nextLine(mood)); navigator.vibrate?.(8); },
     lookAt(x, y) { look = { x: clamp(x, -1, 1), y: clamp(y, -1, 1), until: performance.now() + 1500 }; },
   };

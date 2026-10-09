@@ -129,19 +129,13 @@ body.ready .reveal {
 @keyframes pop { to { opacity: 1; transform: none; } }
 
 /* ---------- Mraq (maskot) ---------- */
-/* Mraq jako notifikace: sklo, malý orb vlevo, text vpravo */
-.note {
-  display: grid; grid-template-columns: 50px 1fr; gap: 12px; align-items: center; margin-top: 16px;
-  padding: 11px 14px 11px 11px; border-radius: 22px; cursor: pointer;
-  background: color-mix(in srgb, var(--glass) 100%, transparent); border: 1px solid var(--glass-line);
-  backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  box-shadow: 0 8px 30px rgba(20, 20, 40, .08), inset 0 1px 0 rgba(255,255,255,.25);
-}
-.orb { position: relative; width: 50px; height: 50px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
+/* Mraq + myšlenková bublina */
+.buddy { display: grid; grid-template-columns: 104px 1fr; gap: 18px; align-items: center; margin: 22px 0 18px; }
+.orb { position: relative; width: 104px; height: 104px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
 .orb__glow, .orb__ball { position: absolute; border-radius: 50%; pointer-events: none; }
-.orb__glow { inset: -8px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .5; filter: blur(8px); }
+.orb__glow { inset: -14px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .55; filter: blur(14px); }
 .orb__ball {
-  inset: 1px; filter: blur(2.5px);
+  inset: 2px; filter: blur(4px);
   background: radial-gradient(circle at 42% 34%, color-mix(in srgb, #fff 55%, var(--orb)) 0%, var(--orb) 46%, color-mix(in srgb, var(--orb) 80%, #000 10%) 72%, transparent 76%);
 }
 .orb__face { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -157,26 +151,91 @@ body.ready .reveal {
 .orb.shake { animation: shake .55s linear; }
 .orb.shiver { animation: shiver .9s linear; }
 .orb.tilt { animation: tilt .9s var(--ease); }
-@keyframes hop { 30% { transform: translateY(-7px) scale(1.04, .97); } 55% { transform: translateY(0) scale(1.06, .92); } 75% { transform: translateY(-2px); } }
+@keyframes hop { 30% { transform: translateY(-14px) scale(1.04, .97); } 55% { transform: translateY(0) scale(1.06, .92); } 75% { transform: translateY(-3px); } }
 @keyframes shake { 20%, 60% { transform: translateX(-5px) rotate(-3deg); } 40%, 80% { transform: translateX(5px) rotate(3deg); } }
 @keyframes shiver { 0%, 100% { transform: none; } 10%, 30%, 50%, 70%, 90% { transform: translateX(-1.5px); } 20%, 40%, 60%, 80% { transform: translateX(1.5px); } }
 @keyframes tilt { 40% { transform: rotate(-10deg); } }
 .orb { animation: breathe 5s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: scale(1.025, .985) translateY(1px); } }
-.orb__z { position: absolute; right: -4px; top: -6px; pointer-events: none; font: 600 10px var(--mono); color: var(--ink-2); opacity: 0; }
+.orb__z { position: absolute; right: -2px; top: -4px; pointer-events: none; font: 600 14px var(--mono); color: var(--ink-2); opacity: 0; }
 .orb.sleep .orb__z { opacity: 1; }
 .orb__z i { position: absolute; font-style: normal; animation: zz 3s ease-in infinite; opacity: 0; }
-.orb__z i:nth-child(2) { animation-delay: 1s; font-size: 9px; }
-.orb__z i:nth-child(3) { animation-delay: 2s; font-size: 12px; }
+.orb__z i:nth-child(2) { animation-delay: 1s; font-size: 12px; }
+.orb__z i:nth-child(3) { animation-delay: 2s; font-size: 17px; }
 @keyframes zz { 0% { opacity: 0; transform: translate(0, 10px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(14px, -22px); } }
-.say { min-width: 0; }
-.say__who { margin: 0 0 2px; display: flex; align-items: baseline; gap: 6px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .09em; color: var(--ink-2); }
-.say__who b { color: var(--ink); font-weight: 600; }
+/* tmavá myšlenková bublina, z které vedou dvě kuličky k Mraqovi */
+.say { position: relative; min-width: 0; padding: 11px 15px 12px; border-radius: 22px; color: #f4f1ea;
+  background: rgba(22, 22, 26, .9); box-shadow: 0 10px 30px rgba(10, 10, 30, .18);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.say::before, .say::after { content: ''; position: absolute; border-radius: 50%; background: rgba(22, 22, 26, .9); }
+.say::before { width: 16px; height: 16px; left: -10px; bottom: 6px; }
+.say::after { width: 8px; height: 8px; left: -21px; bottom: 0; }
+.say__who { margin: 0 0 3px; display: flex; align-items: baseline; gap: 6px; font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .09em; color: rgba(244, 241, 234, .5); }
+.say__who b { color: rgba(244, 241, 234, .85); font-weight: 600; }
 .say__who span::before { content: '· '; }
-.say__who time { margin-left: auto; text-transform: none; letter-spacing: 0; }
 .say__text { margin: 0; font: 450 14.5px/1.38 var(--font); letter-spacing: -.005em; min-height: 2.76em; text-wrap: pretty; }
-.say__text .caret { display: inline-block; width: .55em; height: 1.05em; margin-left: 1px; vertical-align: -.15em; background: var(--ink); animation: caret .9s steps(1) infinite; }
+.say__text .caret { display: inline-block; width: .5em; height: 1.05em; margin-left: 1px; vertical-align: -.15em; background: #f4f1ea; animation: caret .9s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
+
+/* ---------- Animace počasí kolem Mraqa (jako animované ikonky) ---------- */
+.fx { position: absolute; inset: 0; pointer-events: none; }
+.fx > i { position: absolute; display: none; font-style: normal; }
+.orb[data-fx~="sun"] .fx-sun, .orb[data-fx~="moon"] .fx-moon, .orb[data-fx~="moon"] .fx-stars,
+.orb[data-fx~="rain"] .fx-drops, .orb[data-fx~="drizzle"] .fx-drops, .orb[data-fx~="snow"] .fx-flakes,
+.orb[data-fx~="storm"] .fx-bolt, .orb[data-fx~="storm"] .fx-drops, .orb[data-fx~="wind"] .fx-wind, .orb[data-fx~="fog"] .fx-fog { display: block; }
+/* slunce vykukuje vpravo nahoře, paprsky se točí */
+.fx-sun { right: -24px; top: -24px; width: 68px; height: 68px; }
+.fx-sun::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #ffb21e 0 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 46%, #000 48%, #000 66%, transparent 68%); mask: radial-gradient(circle, transparent 46%, #000 48%, #000 66%, transparent 68%);
+  animation: spin 14s linear infinite; }
+.fx-sun::after { content: ''; position: absolute; inset: 19px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ffd76a, #ffaa14); box-shadow: 0 0 18px #ffb21e88; animation: pulse 3.2s ease-in-out infinite; }
+.orb[data-fx~="small"] .fx-sun { transform: scale(.78); right: -16px; top: -18px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 50% { transform: scale(1.08); } }
+/* měsíc + hvězdičky v noci */
+.fx-moon { right: -6px; top: -10px; width: 30px; height: 30px; border-radius: 50%; box-shadow: inset -8px -3px 0 0 #f5e6b0; transform: rotate(-20deg); filter: drop-shadow(0 0 6px #f5e6b066); }
+.fx-stars { inset: -10px; }
+.fx-stars b { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff6d0; animation: twinkle 2.6s ease-in-out infinite; }
+.fx-stars b:nth-child(1) { left: 0; top: 18px; }
+.fx-stars b:nth-child(2) { left: 18px; top: -2px; animation-delay: .9s; width: 3px; height: 3px; }
+.fx-stars b:nth-child(3) { right: -6px; bottom: 26px; animation-delay: 1.7s; }
+@keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+/* kapky padají pod Mraqem */
+.fx-drops { left: 22px; right: 22px; bottom: -22px; height: 34px; }
+.fx-drops b { position: absolute; top: 0; width: 3.5px; height: 11px; border-radius: 3px; background: #31d7ff; transform: skewX(-14deg); opacity: 0; animation: drop 1s linear infinite; }
+.fx-drops b:nth-child(1) { left: 6%; } .fx-drops b:nth-child(2) { left: 28%; animation-delay: .35s; }
+.fx-drops b:nth-child(3) { left: 50%; animation-delay: .7s; } .fx-drops b:nth-child(4) { left: 72%; animation-delay: .15s; }
+.fx-drops b:nth-child(5) { left: 92%; animation-delay: .55s; }
+.orb[data-fx~="drizzle"] .fx-drops b { height: 5px; width: 2.5px; animation-duration: 1.6s; }
+.orb[data-fx~="drizzle"] .fx-drops b:nth-child(even) { display: none; }
+@keyframes drop { 0% { transform: translateY(-6px) skewX(-14deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(24px) skewX(-14deg); opacity: 0; } }
+/* sníh */
+.fx-flakes { left: 14px; right: 14px; bottom: -24px; height: 36px; }
+.fx-flakes b { position: absolute; top: 0; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(60, 100, 160, .25), 0 0 6px rgba(255,255,255,.9); opacity: 0; animation: flake 2.4s ease-in infinite; }
+.fx-flakes b:nth-child(1) { left: 4%; } .fx-flakes b:nth-child(2) { left: 26%; animation-delay: .8s; }
+.fx-flakes b:nth-child(3) { left: 50%; animation-delay: 1.6s; } .fx-flakes b:nth-child(4) { left: 72%; animation-delay: .4s; }
+.fx-flakes b:nth-child(5) { left: 92%; animation-delay: 1.2s; }
+@keyframes flake { 0% { transform: translate(0, -6px); opacity: 0; } 20% { opacity: 1; } 50% { transform: translate(5px, 12px); } 100% { transform: translate(-3px, 30px); opacity: 0; } }
+/* blesk bliká */
+.fx-bolt { left: 50%; bottom: -26px; width: 26px; height: 30px; margin-left: -13px; animation: bolt 2.4s steps(1) infinite; }
+.fx-bolt svg { width: 100%; height: 100%; fill: #ff3df2; stroke: none; filter: drop-shadow(0 0 6px #ff3df2); }
+@keyframes bolt { 0%, 62%, 100% { opacity: 0; } 64%, 70% { opacity: 1; } 67% { opacity: .2; } 74%, 80% { opacity: 1; } }
+.orb[data-fx~="storm"] .orb__ball { animation: flash 2.4s steps(1) infinite; }
+@keyframes flash { 0%, 62%, 100% { filter: blur(4px); } 64%, 74% { filter: blur(4px) brightness(1.35); } }
+.orb[data-fx~="storm"] .fx-drops { left: 8px; right: 60px; }
+/* vítr: čárky letí přes Mraqa */
+.fx-wind { inset: 10px -30px; }
+.fx-wind b { position: absolute; left: 0; height: 2.5px; border-radius: 3px; background: linear-gradient(90deg, transparent, var(--ink-2), transparent); opacity: 0; animation: gust 1.8s ease-in-out infinite; }
+.fx-wind b:nth-child(1) { top: 20%; width: 46px; } .fx-wind b:nth-child(2) { top: 52%; width: 64px; animation-delay: .6s; }
+.fx-wind b:nth-child(3) { top: 80%; width: 38px; animation-delay: 1.1s; }
+@keyframes gust { 0% { transform: translateX(-10px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateX(150px); opacity: 0; } }
+/* mlha: pruhy se pomalu posouvají */
+.fx-fog { left: -14px; right: -14px; bottom: -6px; height: 34px; }
+.fx-fog b { position: absolute; left: 0; right: 0; height: 8px; border-radius: 8px; background: rgba(255,255,255,.85); box-shadow: 0 0 0 1px rgba(0,0,0,.04); filter: blur(1px); animation: fog 4s ease-in-out infinite alternate; }
+.fx-fog b:nth-child(1) { top: 4px; right: 22px; } .fx-fog b:nth-child(2) { top: 18px; left: 22px; animation-delay: -2s; }
+@keyframes fog { to { transform: translateX(14px); } }
+body.lite .fx * , body.lite .fx *::before, body.lite .fx *::after { animation: none !important; }
 
 /* ---------- Hero teplota ---------- */
 .hero { text-align: center; margin-top: 22px; }
@@ -294,6 +353,37 @@ body.dark .key--wet { background: #7fb2ff; }
 .week .day .hi { font-variant-numeric: tabular-nums; }
 .week .bar { position: relative; height: 4px; border-radius: 4px; background: var(--ink-3); }
 .week .bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, #6fa8ff, #ffd23f, #ff6b3d); }
+
+/* ---------- Nastavení ---------- */
+.setbtn { margin: 30px auto 0; display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 99px;
+  font: 500 14px var(--font); background: var(--glass); border: 1px solid var(--glass-line);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.setbtn svg { width: 18px; height: 18px; }
+.setbtn:active { transform: scale(.97); }
+.set__head { display: flex; justify-content: space-between; align-items: center; }
+.set__close { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.06); }
+.set__close svg { width: 18px; height: 18px; }
+.set__title { margin: 18px 4px 8px; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: rgba(0,0,0,.45); }
+.set__group { background: #fff; border-radius: 18px; overflow: hidden; border: 1px solid rgba(0,0,0,.06); }
+.set__row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 54px; }
+.set__row + .set__row { border-top: 1px solid rgba(0,0,0,.07); }
+.set__row > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set__row b { font-weight: 500; font-size: 15px; }
+.set__row small { font-size: 12px; color: rgba(0,0,0,.5); }
+.set__row input[type=time] { font: 500 14px var(--mono); padding: 6px 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,.12); background: #f6f4ef; color: #141414; }
+.set__row input[type=radio] { width: 20px; height: 20px; accent-color: #141414; }
+.sw { appearance: none; -webkit-appearance: none; flex: none; width: 46px; height: 28px; border-radius: 99px; background: rgba(0,0,0,.14); position: relative; cursor: pointer; transition: background .2s; }
+.sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .25s var(--ease); }
+.sw:checked { background: #141414; }
+.sw:checked::after { transform: translateX(18px); }
+.set__hint { margin: 8px 4px 0; font: 12px/1.5 var(--mono); color: rgba(0,0,0,.6); }
+.set__hint:empty { display: none; }
+.set__btn { margin: 10px 0 0; width: 100%; padding: 12px; border-radius: 14px; background: #141414; color: #fff; font: 500 14px var(--font); }
+.set__about { margin: 22px 4px 4px; font: 11px/1.6 var(--mono); color: rgba(0,0,0,.4); text-align: center; }
+/* úsporné animace */
+body.lite .sky__blob, body.lite .orb, body.lite .orb__z i { animation: none !important; }
+body.lite .sky.rain::after { display: none; }
+body.no-mraq .buddy { display: none; }
 
 .foot { margin-top: 30px; font-size: 11px; line-height: 1.6; color: var(--ink-2); text-align: center; }
 .foot a { color: inherit; }
