@@ -151,9 +151,9 @@ srovnani.stejne-konec = jako včera
 srovnani.trochu = trochu {smer}
 srovnani.dost = o dost {smer}
 srovnani.konec = než včera
-srovnani.tepleji = tepleji
-srovnani.chladneji = chladněji
-srovnani.extrem-tepleji = úplně jiné léto
+srovnani.tepleji = teplejc
+srovnani.chladneji = chladnějc
+srovnani.extrem-tepleji = úplně jiný léto
 srovnani.extrem-chladneji = úplně jiná zima
 srovnani.extrem-konec = (o {stupne}° {smer} než včera)
 
@@ -161,64 +161,64 @@ srovnani.extrem-konec = (o {stupne}° {smer} než včera)
 # víc věcí v jednom řádku odděluj svislítkem |
 # čísla = průměrná pocitová teplota na zbytek dne (25+ °C, 20+, 15+, 10+, 4+, -2+, pod -2)
 obleceni.nadpis = Vem si:
-obleceni.25 = triko | kraťasy
-obleceni.20 = triko | lehké kalhoty
-obleceni.20-vecer = triko | něco přes na večer
-obleceni.15 = lehká mikina
-obleceni.10 = mikina | lehká bunda
-obleceni.4 = bunda | něco pod ni
-obleceni.-2 = zimní bunda | čepice
-obleceni.mraz = termoprádlo | zimní bunda | čepice | rukavice
+obleceni.25 = plavky | litr vody
+obleceni.20 = tvůj nejlepší letní fit
+obleceni.20-vecer = dobrej outfit | mikinu na večer
+obleceni.15 = oblíbenou mikinu
+obleceni.10 = kapesníky | mikina | bunda | něco mezi
+obleceni.4 = bunda | něco pod ní
+obleceni.-2 = topení | dvě bundy
+obleceni.mraz = termoprádlo | horkej čaj
 # přidává se navíc podle počasí:
-obleceni.destnik = deštník ☂
+obleceni.destnik = deštník ☂ | ploutve | neopren
 obleceni.destnik-asi = deštník do batohu, pro jistotu
-obleceni.snih = boty, co nepromoknou
-obleceni.uv-silne = brýle + krém
-obleceni.uv = sluneční brýle
-obleceni.vitr = nic, co uletí
+obleceni.snih = rolbu
+obleceni.uv-silne = brýle | SPF 50 | vizitku na kožní
+obleceni.uv = sluneční brejle (aspoň schováš ty kruhy pod očima)
+obleceni.vitr = cihlu do kapsy | nic, co uletí
 
 # ---------- Karta Pohoda ----------
-pohoda.nic = nic to nekazí
+pohoda.nic = 10/10
 pohoda.kazi = kazí to {co}
-pohoda.co.zima = zima
+pohoda.co.zima = brutální zima
 pohoda.co.chladek = chládek
 pohoda.co.teplo = teplo
-pohoda.co.vedro = vedro
-pohoda.co.dest = déšť
+pohoda.co.vedro = sauna
+pohoda.co.dest = mokro
 pohoda.co.vitr = vítr
 pohoda.co.mraky = mraky
 pohoda.co.tma = tma
-pohoda.nejlip-ted = nejlíp je teď
-pohoda.nejlip = nejlíp {cas}
+pohoda.nejlip-ted = teď je to nejvíc hratelný
+pohoda.nejlip = nejlíp bude {cas}
 slovo.zitra = zítra
 
 # ---------- Karta Déšť a věta pod kartami ----------
 dest.karta-mm = naprší ~{mm} mm/h
-dest.karta-sucho = nic nenaprší
-dest.prsi-prestane = Prší. Podle modelu přestane kolem {cas}.
+dest.karta-sucho = ani kapka
+dest.prsi-prestane = Prší. Radar slibuje konec v {cas}.
 dest.prsi-neprestane = Prší a jen tak nepřestane.
-dest.zacne = Pozor, kolem {cas} začne pršet.
-dest.prsi-konec = Prší. Konec v plánu kolem {cas}.
-dest.prsi-celyden = Prší a celý den to vypadá stejně.
+dest.zacne = V {cas} začne pršet. Neříkej, že jsem tě nevaroval.
+dest.prsi-konec = Prší. Končíme v {cas}.
+dest.prsi-celyden = Prší a celej den bude.
 dest.sucho24 = Dalších 24 hodin sucho. Deštník může zůstat doma.
-dest.sucho-do = Do {cas} sucho, pak to začne kapat.
+dest.sucho-do = Do {cas} sucho, pak to začne.
 
 # ---------- Radar ----------
-radar.u-tebe = U tebe {co} · {mm} mm za 15 min.
-radar.u-tebe-sucho = U tebe sucho.
-radar.pohyb = Mapa: odhad, srážky se posouvají {smer} asi {rychlost} km/h.
-radar.stoji = Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.
-radar.bez-dat = Předpověď po 15 minutách teď není k dispozici.
-radar.bez-predpovedi = Modře je, kde pršelo. Posuň osu doprava a uvidíš, co čeká tebe.
+radar.u-tebe = {co} · {mm} mm za 15 min.
+radar.u-tebe-sucho = Zatim sucho. Buď rád.
+radar.pohyb = Mapa: mraky letí {smer} rychlostí {rychlost} km/h.
+radar.stoji = Mapa: déšť tu prostě zaparkoval a stojí.
+radar.bez-dat = Server mlčí. Po 15 minutách radši neplánuj.
+radar.bez-predpovedi = Modrá je minulost. Posuň osu do budoucna a zjisti svůj osud.
 radar.sucho3h = Další 3 hodiny u tebe nic nespadne.
-radar.celkem = Do {cas} asi {mm} mm.
-radar.sucho = sucho
-radar.slaby = slabý déšť
+radar.celkem = Do {cas} to hodí asi {mm} mm.
+radar.sucho = čistý sucho
+radar.slaby = pár kapek
 radar.dest = déšť
-radar.silny = silný déšť
-radar.lijak = liják
+radar.silny = solidní sprcha
+radar.lijak = aquapark
 
 # ---------- Vyskakovací hlášky ----------
-hlaska.poloha-zakazana = Polohu jsi nepovolil. Tak aspoň Praha.
-hlaska.offline = Jsi offline. Ukazuju poslední známou předpověď.
-hlaska.chyba = Nepovedlo se stáhnout počasí. Zkus to za chvíli.
+hlaska.poloha-zakazana = Nechceš říct, kde jsi. Fajn, budeš v Praze.
+hlaska.offline = Počasí se nenačetlo. Budeš se muset fyzicky podívat z okna (sorry).
+hlaska.chyba = Chyba. Nezbývá ti než použít tu věc, který se říká okno. Zkus to za chvíli.
