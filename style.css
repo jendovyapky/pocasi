@@ -133,15 +133,15 @@ body.ready .reveal {
 
 /* ---------- Mraq (maskot) ---------- */
 /* Mraq + myšlenková bublina */
-.buddy { display: grid; grid-template-columns: 104px 1fr; gap: 18px; align-items: center; margin: 22px 0 18px; }
-.orb { position: relative; width: 104px; height: 104px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
-.orb__glow, .orb__ball { position: absolute; border-radius: 50%; pointer-events: none; }
-.orb__glow { inset: -14px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .55; filter: blur(14px); }
-.orb__ball {
-  inset: 2px; filter: blur(4px);
-  background: radial-gradient(circle at 42% 34%, color-mix(in srgb, #fff 55%, var(--orb)) 0%, var(--orb) 46%, color-mix(in srgb, var(--orb) 80%, #000 10%) 72%, transparent 76%);
-}
-.orb__face { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.buddy { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; margin: 18px -6px 16px -8px; }
+.orb { position: relative; width: 150px; height: 119px; touch-action: manipulation; transition: --orb 1.2s var(--ease); }
+.orb__glow { position: absolute; pointer-events: none; border-radius: 50%; inset: -6px 0 -10px -6px; background: radial-gradient(closest-side, var(--orb), transparent); opacity: .5; filter: blur(16px); }
+/* tělo Mraqa = mrak s ocáskem jako Q (stejný tvar jako ikonka), rozmazané okraje */
+.orb__ball { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; filter: blur(3.5px); }
+.orb__ball .s1 { stop-color: color-mix(in srgb, #fff 55%, var(--orb)); }
+.orb__ball .s2 { stop-color: var(--orb); }
+.orb__ball .s3 { stop-color: color-mix(in srgb, var(--orb) 82%, #000); }
+.orb__face { position: absolute; left: 21px; top: 6px; width: 104px; height: 104px; overflow: visible; }
 .orb__eye, .orb__mouthO { fill: #141414; stroke: none; }
 .orb__lash { stroke: #141414; stroke-width: 3.4; fill: none; }
 .orb__mouth { stroke: #141414; stroke-width: 3.6; fill: none; }
@@ -160,7 +160,7 @@ body.ready .reveal {
 @keyframes tilt { 40% { transform: rotate(-10deg); } }
 .orb { animation: breathe 5s ease-in-out infinite; }
 @keyframes breathe { 50% { transform: scale(1.025, .985) translateY(1px); } }
-.orb__z { position: absolute; right: -2px; top: -4px; pointer-events: none; font: 600 14px var(--mono); color: var(--ink-2); opacity: 0; }
+.orb__z { position: absolute; right: 10px; top: -2px; pointer-events: none; font: 600 14px var(--mono); color: var(--ink-2); opacity: 0; }
 .orb.sleep .orb__z { opacity: 1; }
 .orb__z i { position: absolute; font-style: normal; animation: zz 3s ease-in infinite; opacity: 0; }
 .orb__z i:nth-child(2) { animation-delay: 1s; font-size: 12px; }
@@ -187,7 +187,7 @@ body.ready .reveal {
 .orb[data-fx~="rain"] .fx-drops, .orb[data-fx~="drizzle"] .fx-drops, .orb[data-fx~="snow"] .fx-flakes,
 .orb[data-fx~="storm"] .fx-bolt, .orb[data-fx~="storm"] .fx-drops, .orb[data-fx~="wind"] .fx-wind, .orb[data-fx~="fog"] .fx-fog { display: block; }
 /* slunce vykukuje vpravo nahoře, paprsky se točí */
-.fx-sun { right: -24px; top: -24px; width: 68px; height: 68px; }
+.fx-sun { right: 2px; top: -16px; width: 64px; height: 64px; }
 .fx-sun::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
   background: repeating-conic-gradient(from 0deg, #ffb21e 0 6deg, transparent 6deg 30deg);
   -webkit-mask: radial-gradient(circle, transparent 46%, #000 48%, #000 66%, transparent 68%); mask: radial-gradient(circle, transparent 46%, #000 48%, #000 66%, transparent 68%);
@@ -205,7 +205,7 @@ body.ready .reveal {
 .fx-stars b:nth-child(3) { right: -6px; bottom: 26px; animation-delay: 1.7s; }
 @keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
 /* kapky padají pod Mraqem */
-.fx-drops { left: 22px; right: 22px; bottom: -22px; height: 34px; }
+.fx-drops { left: 34px; right: 40px; bottom: -18px; height: 34px; }
 .fx-drops b { position: absolute; top: 0; width: 3.5px; height: 11px; border-radius: 3px; background: #31d7ff; transform: skewX(-14deg); opacity: 0; animation: drop 1s linear infinite; }
 .fx-drops b:nth-child(1) { left: 6%; } .fx-drops b:nth-child(2) { left: 28%; animation-delay: .35s; }
 .fx-drops b:nth-child(3) { left: 50%; animation-delay: .7s; } .fx-drops b:nth-child(4) { left: 72%; animation-delay: .15s; }
@@ -214,18 +214,18 @@ body.ready .reveal {
 .orb[data-fx~="drizzle"] .fx-drops b:nth-child(even) { display: none; }
 @keyframes drop { 0% { transform: translateY(-6px) skewX(-14deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(24px) skewX(-14deg); opacity: 0; } }
 /* sníh */
-.fx-flakes { left: 14px; right: 14px; bottom: -24px; height: 36px; }
+.fx-flakes { left: 26px; right: 30px; bottom: -20px; height: 36px; }
 .fx-flakes b { position: absolute; top: 0; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(60, 100, 160, .25), 0 0 6px rgba(255,255,255,.9); opacity: 0; animation: flake 2.4s ease-in infinite; }
 .fx-flakes b:nth-child(1) { left: 4%; } .fx-flakes b:nth-child(2) { left: 26%; animation-delay: .8s; }
 .fx-flakes b:nth-child(3) { left: 50%; animation-delay: 1.6s; } .fx-flakes b:nth-child(4) { left: 72%; animation-delay: .4s; }
 .fx-flakes b:nth-child(5) { left: 92%; animation-delay: 1.2s; }
 @keyframes flake { 0% { transform: translate(0, -6px); opacity: 0; } 20% { opacity: 1; } 50% { transform: translate(5px, 12px); } 100% { transform: translate(-3px, 30px); opacity: 0; } }
 /* blesk bliká */
-.fx-bolt { left: 50%; bottom: -26px; width: 26px; height: 30px; margin-left: -13px; animation: bolt 2.4s steps(1) infinite; }
+.fx-bolt { left: 46%; bottom: -22px; width: 26px; height: 30px; margin-left: -13px; animation: bolt 2.4s steps(1) infinite; }
 .fx-bolt svg { width: 100%; height: 100%; fill: #ff3df2; stroke: none; filter: drop-shadow(0 0 6px #ff3df2); }
 @keyframes bolt { 0%, 62%, 100% { opacity: 0; } 64%, 70% { opacity: 1; } 67% { opacity: .2; } 74%, 80% { opacity: 1; } }
 .orb[data-fx~="storm"] .orb__ball { animation: flash 2.4s steps(1) infinite; }
-@keyframes flash { 0%, 62%, 100% { filter: blur(4px); } 64%, 74% { filter: blur(4px) brightness(1.35); } }
+@keyframes flash { 0%, 62%, 100% { filter: blur(3.5px); } 64%, 74% { filter: blur(3.5px) brightness(1.35); } }
 .orb[data-fx~="storm"] .fx-drops { left: 8px; right: 60px; }
 /* vítr: čárky letí přes Mraqa */
 .fx-wind { inset: 10px -30px; }

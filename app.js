@@ -1150,6 +1150,7 @@ function wire() {
 let mraq = null;
 async function boot() {
   mraq = createMraq();
+  window.__mraq = mraq; // pro náhledy výrazů
   applySettings();
   wire();
   wireSettings();

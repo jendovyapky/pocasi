@@ -13,7 +13,7 @@ export const MOODS = {
   pohoda:     { name: 'v pohodě',        color: '#8fd3b8', p: { open: .85, lidB: .2, curve: .5, mw: 10 } },
   ospaly:     { name: 'je ospalej',      color: '#a3a9e8', p: { open: .4, lookY: .6, curve: 0, mw: 6 }, idle: 'yawn' },
   spi:        { name: 'spí',             color: '#6c72c4', p: { open: 0, curve: .25, mw: 5, closedCurve: 1 }, sleep: true },
-  smutek:     { name: 'je smutnej',      color: '#74bff0', p: { open: .9, lidT: -.55, lookY: .45, curve: -.85, mw: 9 } },
+  smutek:     { name: 'je smutnej',      color: '#74bff0', p: { open: .8, lidT: -.3, lookY: .55, curve: -.5, mw: 8, spark: .45 } },
   znechuceni: { name: 'je znechucenej',  color: '#5ccb8a', p: { open: .6, lidT: .15, asym: .6, curve: -.35, tilt: .7, mw: 10 } },
   stejne:     { name: 'se nudí',         color: '#8a93d9', p: { open: .5, lookX: .7, curve: 0, mw: 9 }, idle: 'roll' },
   nuda:       { name: 'se nudí',         color: '#8a93d9', p: { open: .5, lookX: .7, curve: 0, mw: 9 }, idle: 'roll' },
