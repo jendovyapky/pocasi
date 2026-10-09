@@ -76,12 +76,17 @@ Mrholení: déšť, co se nemůže rozhodnout.
 Ten typ deště, co skoro neprší, ale mokrej jsi stejně.
 
 [nuda]
-# zataženo, mlha, stejné jako včera (Mraq u toho koulí očima)
+# zataženo nebo mlha (Mraq u toho koulí očima)
 Zase zataženo. Fakt originální.
-{teplota}° a šedo. Jako včera. A předevčírem.
+{stav}, {teplota}°. Nebe dneska nemá nápady.
 Mlha. Svět se dneska načítá pomaleji.
 Zataženo. Slunce má home office.
+
+[stejne]
+# šedivo a zhruba stejně jako včera (taky koulí očima)
 Ctrl+C, Ctrl+V ze včerejška.
+{teplota}° a šedo. Jako včera. A předevčírem.
+Včerejšek si dal reprízu.
 
 [strach]
 # bouřka

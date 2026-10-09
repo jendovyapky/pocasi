@@ -15,6 +15,7 @@ export const MOODS = {
   spi:        { name: 'spí',             color: '#6c72c4', p: { open: 0, curve: .25, mw: 5, closedCurve: 1 }, sleep: true },
   smutek:     { name: 'je smutnej',      color: '#74bff0', p: { open: .9, lidT: -.55, lookY: .45, curve: -.85, mw: 9 } },
   znechuceni: { name: 'je znechucenej',  color: '#5ccb8a', p: { open: .6, lidT: .15, asym: .6, curve: -.35, tilt: .7, mw: 10 } },
+  stejne:     { name: 'se nudí',         color: '#8a93d9', p: { open: .5, lookX: .7, curve: 0, mw: 9 }, idle: 'roll' },
   nuda:       { name: 'se nudí',         color: '#8a93d9', p: { open: .5, lookX: .7, curve: 0, mw: 9 }, idle: 'roll' },
   strach:     { name: 'se bojí',         color: '#c3a3ea', p: { open: 1, eyeW: 7, eyeH: 8.5, wave: 1, mw: 12 }, idle: 'shake' },
   vztek:      { name: 'zuří',            color: '#e4605a', p: { open: .75, lidT: .65, curve: -.6, mw: 8 }, idle: 'shake' },
@@ -27,7 +28,7 @@ export const MOODS = {
 const FALLBACK = {
   radost: ['{teplota}° a sluníčko. Konečně.'], pohoda: ['{stav}, {teplota}°. Dá se.'], ospaly: ['Ještě spím. {teplota}° je na mě moc brzo.'],
   spi: ['Pšt, spím. Slunce vyleze v {vychod}.'], smutek: ['Prší. Nebrečím, to jen ze mě padá voda.'], znechuceni: ['Mrholí. Fuj.'],
-  nuda: ['Zase zataženo. Fakt originální.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
+  nuda: ['Zase zataženo. Fakt originální.'], stejne: ['Ctrl+C, Ctrl+V ze včerejška.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
   nervy: ['Fouká {vitr} km/h! Drž si čepici.'], zima: ['Pocitově {pocitove}°. Brrr.'], snih: ['Sněží!!'],
   'pohoda-popisky': ['Paráda', 'Fajn', 'Ujde to', 'Meh', 'Zůstaň doma'],
 };
@@ -118,7 +119,7 @@ export function createMraq() {
     droop: () => ({ dur: 1200, fn: (k) => { const s = Math.sin(k * Math.PI); return { p: { lookY: lerp(target.lookY, 1, s), curve: target.curve - s * .3 } }; } }),
     tilt: () => { kick('tilt'); return { dur: 900, fn: (k) => ({ p: { asym: target.asym + Math.sin(k * Math.PI) * .4, lookX: -.8 * Math.sin(k * Math.PI) } }) }; },
   };
-  const TAP = { radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
+  const TAP = { stejne: 'roll', radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
 
   function kick(cls) { orb.classList.remove('hop', 'shake', 'shiver', 'tilt'); void orb.offsetWidth; orb.classList.add(cls); }
   function run(name) { const a = ACTIONS[name]?.(); if (a) action = { ...a, t0: performance.now() }; }

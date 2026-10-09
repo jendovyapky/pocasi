@@ -370,8 +370,9 @@ function mascotMood(f) {
   if (feels >= 29) return 'vztek';
   if (feels <= 4) return 'zima';
   if (ms - rise < 2.2 * HOUR && new Date(ms).getUTCHours() < 10) return 'ospaly';
+  const same = state.delta != null && Math.abs(state.delta) < 1.5;
+  if (same && cloud >= 60) return 'stejne';
   if (k === 'fog' || cloud >= 85) return 'nuda';
-  if (state.delta != null && Math.abs(state.delta) < 1 && cloud >= 60) return 'nuda';
   if ((k === 'clear' || k === 'part') && feels >= 13) return 'radost';
   return feels < 9 ? 'zima' : 'pohoda';
 }
