@@ -433,7 +433,8 @@ function mascotMood(f) {
   if (hm < 10.5) return 'ospaly'; // po probuzení je do půl jedenácté ospalej
   const same = state.delta != null && Math.abs(state.delta) < 1.5;
   if (same && cloud >= 60) return 'stejne';
-  if (k === 'fog' || cloud >= 85) return 'nuda';
+  if (k === 'fog') return 'mlha';
+  if (cloud >= 85) return 'nuda';
   if ((k === 'clear' || k === 'part') && feels >= 13) return 'radost';
   return feels < 9 ? 'zima' : 'pohoda';
 }

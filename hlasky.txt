@@ -76,11 +76,14 @@ Mrholí, objednal bych jídlo a zůstal doma.
 Ten typ deště, co skoro neprší, ale mokrej jseš stejně.
 
 [nuda]
-# zataženo nebo mlha (Mraq u toho koulí očima)
+# zataženo (Mraq u toho koulí očima)
 Zase zataženo. Fakt originální.
 {stav}, {teplota}°. Dneska nic moc.
-Mlha. Svět se dneska načítá pomalejc.
 Zataženo. Slunce má home office.
+
+[mlha]
+# opravdová mlha – dohlednost pod 1,5 km (taky koulí očima)
+Mlha. Svět se dneska načítá pomalejc.
 
 [stejne]
 # šedivo a zhruba stejně jako včera (taky koulí očima)

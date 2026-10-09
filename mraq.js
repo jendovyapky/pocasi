@@ -20,6 +20,7 @@ export const MOODS = {
   smutek:     { name: 'je smutnej',      color: '#74bff0', p: { open: .8, lidT: -.6, lookY: .7, eyeW: 13, eyeH: 15 } },
   znechuceni: { name: 'je znechucenej',  color: '#5ccb8a', p: { open: .8, lidT: .25, asym: .6, lookX: -.45 }, idle: 'tilt' },
   stejne:     { name: 'se nudí',         color: '#8a93d9', p: { open: .5, lookX: .8, round: .35 }, idle: 'roll' },
+  mlha:       { name: 'nic nevidí',      color: '#a3a8bd', p: { open: .45, lookX: .2, round: .35 }, idle: 'roll' },
   nuda:       { name: 'se nudí',         color: '#8a93d9', p: { open: .55, lidT: -.2, lookX: -.7, round: .35 }, idle: 'roll' },
   strach:     { name: 'se bojí',         color: '#c3a3ea', p: { eyeW: 11, eyeH: 18, lookY: -.3, round: .6 }, idle: 'shake' },
   vztek:      { name: 'zuří',            color: '#e4605a', p: { open: .85, lidT: .85, eyeW: 16 }, idle: 'shake' },
@@ -32,7 +33,7 @@ export const MOODS = {
 const FALLBACK = {
   radost: ['{teplota}° a sluníčko. Konečně.'], pohoda: ['{stav}, {teplota}°. Dá se.'], ospaly: ['Ještě spím. {teplota}° je na mě moc brzo.'],
   spi: ['Pšt, spím. Slunce vyleze v {vychod}.'], smutek: ['Prší. Nebrečím, to jen ze mě padá voda.'], znechuceni: ['Mrholí. Fuj.'],
-  nuda: ['Zase zataženo. Fakt originální.'], stejne: ['Ctrl+C, Ctrl+V ze včerejška.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
+  nuda: ['Zase zataženo. Fakt originální.'], mlha: ['Mlha. Svět se dneska načítá pomalejc.'], stejne: ['Ctrl+C, Ctrl+V ze včerejška.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
   nervy: ['Fouká {vitr} km/h! Drž si čepici.'], zima: ['Pocitově {pocitove}°. Brrr.'], snih: ['Sněží!!'],
   'pohoda-popisky': ['Paráda', 'Fajn', 'Ujde to', 'Meh', 'Zůstaň doma'],
 };
@@ -129,7 +130,7 @@ export function createMraq() {
     droop: () => ({ dur: 1200, fn: (k) => { const s = Math.sin(k * Math.PI); return { p: { lookY: lerp(target.lookY, 1, s), lidT: target.lidT - .2 * s } }; } }),
     tilt: () => { kick('tilt'); return { dur: 900, fn: (k) => ({ p: { asym: target.asym + Math.sin(k * Math.PI) * .4, lookX: -.8 * Math.sin(k * Math.PI) } }) }; },
   };
-  const TAP = { stejne: 'roll', radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
+  const TAP = { mlha: 'roll', stejne: 'roll', radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
 
   function kick(cls) { orb.classList.remove('hop', 'shake', 'shiver', 'tilt'); void orb.offsetWidth; orb.classList.add(cls); }
   function run(name) { const a = ACTIONS[name]?.(); if (a) action = { ...a, t0: performance.now() }; }
