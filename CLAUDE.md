@@ -22,6 +22,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - `style.css` – vzhled; barvy oblohy přes CSS proměnné `--c1 --c2 --c3 --glow` (registrované přes `@property`, plynule se animují)
 - `app.js` – veškerá logika, bez frameworku a bez buildu
 - `mraq.js` – maskot Mraq: tělo = rozmazaný mrak s ocáskem Q (stejný tvar jako ikonka), obličej = robotí tečkové oči (styl Cozmo / RoboEyes, tečky jako písmo Doto), bez pusy. `pixelEye()` počítá každý snímek, které tečky svítí (zaoblený obdélník oříznutý víčky, `happy` = oblouček ∩). Nálady `MOODS`, mrkání, reakce na ťuknutí, psaní vět. Náhled všech výrazů: `window.__mraq.set(nálada)`
+- `intro.js` – úvodní animace při spuštění (canvas přes celou obrazovku, 2,25 s): Mraq se rozhlédne (doleva, doprava, mrkne), nadechne se a kamera proletí 3 vrstvami mraků (paralaxa, perspektivní projekce, hloubka ostrosti přes zmenšené sprity) až do něj; appka se vynoří z mlhy. Barvy z `state.skyPal` (nastavuje `applySky`), ve tmě fialový Mraq + hvězdy + tmavá mlha. Ťuknutí = přeskočit. Nehraje při úsporných animacích, vypnutém Mraqovi a „omezit pohyb“. `introBg` v localStorage = barva prvního snímku.
 - `hlasky.txt` – **všechny hlášky Mraqa** po skupinách `[nálada]`, proměnné `{teplota}` apod. Appka si soubor načítá za běhu → Honza je může přepisovat sám
 - `icons/mraq.svg` – zdroj ikonky (mrak jako Q, oči koukají stranou, zrnitý gradient appky); PNG se z něj renderují Playwrightem
 - `sw.js` – service worker (vlastní soubory network-first s `cache: 'no-cache'`, fonty/Leaflet cache-first, API se necachuje)

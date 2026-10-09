@@ -1,5 +1,6 @@
 /* Mraq — počasí pro líné. Logika bez frameworku a bez buildu (maskot je v mraq.js). */
 import { createMraq, loadLines, LINES, T } from './mraq.js';
+import { createIntro } from './intro.js';
 
 const $ = (s) => document.querySelector(s);
 const HOUR = 3600e3;
@@ -148,6 +149,7 @@ function applySky(f) {
 
   const dark = theme === 'dark' || (theme !== 'light' && (lum(p[0]) + lum(p[1])) / 2 < 0.42);
   document.body.classList.toggle('dark', dark);
+  state.skyPal = { sky: p.slice(0, 3), glow: p[3], sx: clamp(10 + t * 80, -10, 110) / 100, sy: (t > 0 && t < 1 ? 38 - Math.sin(Math.PI * t) * 26 : 70) / 100, dark };
   const sky = $('#sky');
   sky.classList.toggle('rain', rain > 0.2 || k === 'rain' || k === 'storm');
   sky.classList.toggle('heavy', rain > 1.5 || k === 'storm' || code === 65 || code === 82);
@@ -1341,7 +1343,21 @@ function wire() {
 }
 
 let mraq = null;
+// úvodní animace (jen při spuštění; ne v úsporném režimu, bez Mraqa a při „omezit pohyb“)
+let intro = null;
+function startIntro() {
+  if (!intro) return;
+  const h = new Date().getHours(), night = h < 7 || h >= 19;
+  const sp = state.skyPal || (night ? { sky: ['#1c2137', '#272d47', '#191d40'], glow: '#c9ccff', sx: .74, sy: .14, dark: true }
+    : { sky: ['#91b8e3', '#a9cce2', '#badbd2'], glow: '#fff6d6', sx: .8, sy: .12, dark: false });
+  save({ introBg: sp.sky[0] });
+  intro.start(sp); intro = null;
+}
 async function boot() {
+  {
+    const s0 = settings();
+    if (!s0.lite && s0.mraq !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches) try { intro = createIntro(load().introBg); } catch {}
+  }
   mraq = createMraq();
   window.__mraq = mraq; // pro náhledy výrazů
   wearSeed = (load().wearSeed || 0) + 1; save({ wearSeed }); // „Vem si“ pokaždé jiné
@@ -1352,6 +1368,7 @@ async function boot() {
   const saved = load();
   // 1) okamžitě ukaž poslední data z cache
   if (saved.place && saved.cache) { state.place = saved.place; try { ingest(saved.cache.raw, saved.cache.mraw); } catch {} }
+  startIntro();
   // 2) poloha se zjišťuje při každém otevření, ale ptá se jen poprvé (ručně vybrané město platí do zavření appky)
   const st = settings();
   const p = st.placeMode === 'fixed' && st.fixed ? null : await autoLocate();
