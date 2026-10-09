@@ -45,7 +45,7 @@ Takový počasí na pohodu.
 Nic zvláštního. Počasí na klid.
 
 [ospaly]
-# ráno, krátce po východu slunce
+# ráno po probuzení (9:00–10:30)
 Ještě spim. {teplota}° je na mě moc brzo.
 Ráno. Já jdu ještě spát, ty si dej kafe.
 *zívá* Venku {teplota}° a {stav}. Vzbuď mě v poledne.
@@ -53,7 +53,7 @@ Slunce vylezlo v {vychod}. Já zatím ne.
 Ráno je {teplota}°. Přes den to bude lepší. Asi.
 
 [spi]
-# noc
+# noc (22:00–9:00)
 Pššš, spim. Venku {teplota}°, slunce vyleze v {vychod}.
 Noc. Nebe vypnuto, hvězdy fungujou, já jdu spát.
 Zzz… {teplota}°… zzz… zzz.

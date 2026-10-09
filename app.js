@@ -379,14 +379,15 @@ function mascotMood(f) {
   const feels = at(H.feels, f), wind = at(H.wind, f), gust = at(H.gust, f) || 0, rain = at(H.precip, f), cloud = at(H.cloud, f);
   const { t, rise, set } = sunPhase(ms);
   if (k === 'storm') return 'strach';
-  if (t < -0.02 || t > 1.06) return 'spi';
+  const hm = new Date(ms).getUTCHours() + new Date(ms).getUTCMinutes() / 60;
+  if (hm >= 22 || hm < 9) return 'spi'; // spí od 22 do 9
   if (k === 'snow') return 'snih';
   if (k === 'rain' && (code >= 61 || rain >= 0.3)) return 'smutek';
   if (k === 'rain') return 'znechuceni';
   if (wind >= 32 || gust >= 55) return 'nervy';
   if (feels >= 29) return 'vztek';
   if (feels <= 4) return 'zima';
-  if (ms - rise < 2.2 * HOUR && new Date(ms).getUTCHours() < 10) return 'ospaly';
+  if (hm < 10.5) return 'ospaly'; // po probuzení je do půl jedenácté ospalej
   const same = state.delta != null && Math.abs(state.delta) < 1.5;
   if (same && cloud >= 60) return 'stejne';
   if (k === 'fog' || cloud >= 85) return 'nuda';
