@@ -76,12 +76,12 @@ body.scrubbing .sky { transition-duration: .25s; }
 /* ---------- Počasí na pozadí ---------- */
 .sky__fx, .sky__clouds, .sky__flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
 /* mraky: velké měkké chuchvalce pomalu plují přes horní část */
-.sky__clouds i { position: absolute; border-radius: 50%; background: rgba(255,255,255,.55); filter: blur(28px); animation: cloudDrift 60s linear infinite; }
+.sky__clouds i { position: absolute; border-radius: 50%; background: rgba(255,255,255,.3); filter: blur(22px); animation: cloudDrift 70s linear infinite; }
 .sky__clouds i:nth-child(1) { width: 70vw; height: 22vh; top: 4%; left: -40%; }
 .sky__clouds i:nth-child(2) { width: 90vw; height: 26vh; top: 18%; left: -60%; animation-duration: 85s; animation-delay: -30s; opacity: .8; }
-.sky__clouds i:nth-child(3) { width: 60vw; height: 18vh; top: 34%; left: -50%; animation-duration: 72s; animation-delay: -50s; opacity: .6; }
+.sky__clouds i:nth-child(3) { width: 60vw; height: 14vh; top: 26%; left: -50%; animation-duration: 72s; animation-delay: -50s; opacity: .5; }
 @keyframes cloudDrift { to { transform: translateX(200vw); } }
-body.dark .sky__clouds i { background: rgba(170, 180, 210, .16); }
+body.dark .sky__clouds i { background: rgba(170, 180, 210, .07); }
 .sky.cloudy .sky__clouds { opacity: 1; }
 /* déšť: dvě vrstvy čárek, každá jinou rychlostí */
 .sky__fx { inset: -200px 0 0; background-repeat: repeat; will-change: transform; backface-visibility: hidden; }

@@ -163,8 +163,8 @@ async function fetchForecast(lat, lon) {
   const q = new URLSearchParams({
     latitude: lat.toFixed(4), longitude: lon.toFixed(4), timezone: 'auto',
     past_days: 1, forecast_days: 8, wind_speed_unit: 'kmh',
-    current: 'temperature_2m,apparent_temperature,weather_code,cloud_cover,wind_speed_10m,precipitation,is_day,relative_humidity_2m',
-    hourly: 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,uv_index,is_day,relative_humidity_2m',
+    current: 'temperature_2m,apparent_temperature,weather_code,cloud_cover,wind_speed_10m,precipitation,is_day,relative_humidity_2m,visibility',
+    hourly: 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,uv_index,is_day,relative_humidity_2m,visibility',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max,precipitation_sum,uv_index_max',
   });
   const r = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`);
@@ -182,6 +182,8 @@ async function fetchMinutely(lat, lon) {
 }
 // Model občas dá kód „slabý déšť“, i když mu vychází 0 mm → pak je to jen zataženo.
 // Déšť ukazujeme jen když opravdu něco padá (ať Mraq netvrdí, že prší, když neprší).
+// Mlha jen když je opravdu špatně vidět (pod 1,5 km); jinak je to jen zataženo.
+const fogCode = (code, vis) => ((code === 45 || code === 48) && vis != null && vis > 1500 ? 3 : code);
 function dryCode(code, mm, prob = 0) {
   const wet = (code >= 51 && code <= 67) || (code >= 80 && code <= 82);
   const snow = (code >= 71 && code <= 77) || code === 85 || code === 86;
@@ -198,7 +200,7 @@ function process(raw) {
     hourly: {
       t: h.time.map(parseLocal), temp: h.temperature_2m, feels: h.apparent_temperature,
       prob, precip,
-      code: h.weather_code.map((c, i) => dryCode(c, Math.max(precip[i], precip[i + 1] ?? 0), prob[i])), cloud: h.cloud_cover, wind: h.wind_speed_10m, gust: h.wind_gusts_10m,
+      code: h.weather_code.map((c, i) => fogCode(dryCode(c, Math.max(precip[i], precip[i + 1] ?? 0), prob[i]), h.visibility?.[i])), cloud: h.cloud_cover, wind: h.wind_speed_10m, gust: h.wind_gusts_10m,
       uv: h.uv_index.map((v) => v ?? 0), isDay: h.is_day, hum: h.relative_humidity_2m,
     },
     daily: {
@@ -1244,7 +1246,7 @@ function ingest(raw, mraw) {
   if (state.data.current) { // je teď opravdu mokro? (aktuální srážky nebo nejbližších 15 min)
     const c = state.data.current, i = Math.floor(state.nowF);
     const nowMm = Math.max(c.precipitation ?? 0, (state.minutely?.[0]?.p ?? 0) * 4, H.precip[i + 1] ?? 0);
-    c.weather_code = dryCode(c.weather_code, nowMm, H.prob[i] ?? 0);
+    c.weather_code = fogCode(dryCode(c.weather_code, nowMm, H.prob[i] ?? 0), c.visibility);
   }
   state.i0 = Math.floor(state.nowF);
   state.span = Math.min(36, H.t.length - 1 - state.i0);

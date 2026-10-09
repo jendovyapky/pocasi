@@ -31,7 +31,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 ## Data (vše zdarma, bez klíčů)
 - Předpověď: Open-Meteo `api.open-meteo.com/v1/forecast`, `best_match` (pro ČR ICON-D2 2 km + ICON-EU + ECMWF), `past_days=1` kvůli srovnání se včerejškem.
 - Srážky po 15 min: Open-Meteo `minutely_15` (samostatný request, smí selhat).
-- **Pozor:** `weather_code` z modelu občas hlásí slabý déšť/mrholení i při 0 mm. `dryCode()` takové kódy mění na „zataženo“, pokud reálně nic nepadá (hodinové srážky, aktuální srážky, nejbližších 15 min). Mraq, obloha, animace i nápis řídí `codeAt(f)`.
+- **Pozor:** mlhu (kód 45/48) bereme jen při dohlednosti pod 1,5 km (`fogCode()`, `visibility` z API). `weather_code` z modelu občas hlásí i slabý déšť/mrholení i při 0 mm. `dryCode()` takové kódy mění na „zataženo“, pokud reálně nic nepadá (hodinové srážky, aktuální srážky, nejbližších 15 min). Mraq, obloha, animace i nápis řídí `codeAt(f)`.
 - Radar: RainViewer `api.rainviewer.com/public/weather-maps.json` – **od 1. 1. 2026 jen minulé 2 h, žádný nowcast, max zoom 7, barevné schéma jen 2 (Universal Blue)**. Atribuce „RainViewer“ je povinná.
 - Mapový podklad radaru: Esri World Dark Gray (CARTO chce nově API klíč – nepoužívat).
 - Název místa: BigDataCloud reverse geocode (`localityLanguage=cs`); hledání měst: Open-Meteo geocoding (`language=cs`).
