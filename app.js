@@ -858,7 +858,7 @@ function wire() {
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, (e) => { if (!e.target.closest?.('#map')) e.preventDefault(); }, { passive: false });
   document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 && !e.target.closest?.('#map')) e.preventDefault(); }, { passive: false });
   let lastTap = 0;
-  document.addEventListener('touchend', (e) => { const n = Date.now(); if (n - lastTap < 300 && !e.target.closest?.('#map, input')) e.preventDefault(); lastTap = n; }, { passive: false });
+  document.addEventListener('touchend', (e) => { const n = Date.now(); if (n - lastTap < 300 && !e.target.closest?.('#map, input, button, .tl, .dial')) e.preventDefault(); lastTap = n; }, { passive: false });
   document.querySelectorAll('.reveal').forEach((el, i) => el.style.setProperty('--i', i));
   $('#scroller').addEventListener('scroll', onScroll, { passive: true });
   $('#scroller').addEventListener('pointerdown', stopPlay);
