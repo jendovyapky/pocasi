@@ -76,10 +76,10 @@ export function createIntro(first) {
   const cv = document.createElement('canvas');
   cv.className = 'intro';
   cv.setAttribute('aria-hidden', 'true');
-  first = first || '#1b1d2b';
+  first = first || '#000000';
   cv.style.background = first;
   document.body.appendChild(cv);
-  document.documentElement.classList.remove('boot'); // plátno už kryje appku
+  document.documentElement.classList.add('noboot'); // plátno už kryje appku
   let done = false, raf = 0, resolve;
   const finished = new Promise((r) => (resolve = r));
   const app = document.getElementById('app');

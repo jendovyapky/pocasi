@@ -1012,7 +1012,8 @@ function setRadarTime(t, force) {
   $('#tlCursor').style.left = `${xOf(R.sel)}%`;
   const now = Date.now();
   const lastFrame = R.frames.length ? R.frames[R.frames.length - 1].time * 1000 : now;
-  const isFuture = R.sel > lastFrame + 6 * 60e3;
+  // s modelem končí radar hned za posledním snímkem (žádné „animování“ starého snímku)
+  const isFuture = R.sel > lastFrame + (R.model.length ? 3 : 6) * 60e3;
   // snímek radaru: nejbližší starší (v budoucnu drží poslední, ztlumený)
   let want = -1;
   for (let k = 0; k < R.frames.length; k++) if (R.frames[k].time * 1000 <= R.sel + 5 * 60e3) want = k;
@@ -1025,12 +1026,12 @@ function setRadarTime(t, force) {
   }
   // v budoucnu: poslední snímek posunutý podle odhadnutého pohybu, postupně slábne (čím dál, tím nejistější)
   const ahead = isFuture ? R.sel - lastFrame : 0;
-  R.shiftMs = R.motion ? ahead : 0;
+  R.shiftMs = R.motion && !R.model.length ? ahead : 0;
   const hasModel = R.model.length > 0;
-  // s modelem: posunutý radar během ~20 min zmizí, model naskočí hned a do čtvrthodiny je naplno
-  const futOp = hasModel ? clamp(0.75 * (1 - ahead / (20 * 60e3)), 0, 0.75) : R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
+  // s modelem: radar v budoucnu zmizí a hned je naplno předpověď modelu
+  const futOp = hasModel ? 0 : R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
   if (hasModel) {
-    const mFade = isFuture ? clamp(0.35 + ahead / (15 * 60e3), 0, 1) * 0.9 : 0;
+    const mFade = isFuture ? 0.9 : 0;
     let k = 0; while (k < R.model.length - 1 && R.model[k + 1].t <= R.sel) k++;
     const a0 = R.model[k], a1 = R.model[k + 1] || a0;
     const w = a1 === a0 ? 0 : clamp((R.sel - a0.t) / (a1.t - a0.t), 0, 1);
@@ -1355,8 +1356,10 @@ function startIntro() {
 async function boot() {
   {
     const s0 = settings();
-    if (!s0.lite && s0.mraq !== false) try { intro = createIntro('#1b1d2b'); } catch {}
-    document.documentElement.classList.remove('boot');
+    if (!s0.lite && s0.mraq !== false) try { intro = createIntro('#000000'); } catch {}
+    if (!intro) document.documentElement.classList.add('noboot');
+    // černý start řeší color-scheme: dark; appka sama pak běží se světlými výchozími prvky jako dřív
+    document.querySelector('meta[name=color-scheme]')?.setAttribute('content', 'light'); document.documentElement.style.colorScheme = 'light';
   }
   mraq = createMraq();
   window.__mraq = mraq; // pro náhledy výrazů
