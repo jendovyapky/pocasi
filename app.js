@@ -545,8 +545,11 @@ async function openRadar() {
     const L = window.L;
     if (!map) {
       map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 10, minZoom: 4 });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CARTO · <a href="https://www.rainviewer.com/">RainViewer</a>', subdomains: 'abcd', maxZoom: 10,
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri · <a href="https://www.rainviewer.com/">RainViewer</a>', maxZoom: 10,
+      }).addTo(map);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 10, zIndex: 8, pane: 'overlayPane',
       }).addTo(map);
     }
     map.setView([state.place.lat, state.place.lon], 7);

@@ -1,5 +1,5 @@
 // Service worker: aplikace se načte i offline, data jdou vždy nejdřív ze sítě.
-const VERSION = 'lino-v1';
+const VERSION = 'lino-v2';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -12,7 +12,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
   // API počasí a radar: síť, nic necachovat (appka si poslední data drží sama)
-  if (/open-meteo|rainviewer|bigdatacloud|cartocdn/.test(url.hostname)) return;
+  if (/open-meteo|rainviewer|bigdatacloud|arcgisonline/.test(url.hostname)) return;
   // Fonty a Leaflet: cache-first
   if (/fonts\.(googleapis|gstatic)|cdnjs/.test(url.hostname)) {
     e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request).then((res) => {
