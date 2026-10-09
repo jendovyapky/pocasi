@@ -104,7 +104,7 @@ Režim horkovzdušný fritézy aktivován.
 
 [nervy]
 # silný vítr
-Fouká {vitr} km/h! Otevřeš deštník a seš v Polsku.
+Fouká {vitr} km/h! Otevřeš deštník a jseš v Polsku.
 Sousedův zahradní nábytek je na cestě k tobě. Zavři okna.
 Nárazy až {narazy} km/h. Zavři okna a ignoruj to.
 Česat se dneska fakt nemá smysl.
