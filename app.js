@@ -690,7 +690,12 @@ async function openRadar() {
       const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
       R.layers.forEach((l) => R.map.removeLayer(l));
       R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])]; // nowcast RainViewer od 2026 nedává, ale kdyby se vrátil, použije se R.loadedAt = Date.now(); R.shown = -1;
-      R.layers = R.frames.map((fr) => L.tileLayer(`${R.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+      // poslední snímek se v budoucnu posouvá → načíst dlaždice i kus mimo obrazovku, ať nezůstane ostrý okraj
+      const Padded = L.TileLayer.extend({ _getTiledPixelBounds(c) {
+        const b = L.TileLayer.prototype._getTiledPixelBounds.call(this, c), s = b.getSize();
+        return L.bounds(b.min.subtract(s), b.max.add(s));
+      } });
+      R.layers = R.frames.map((fr, k) => new (k === R.frames.length - 1 ? Padded : L.TileLayer)(`${R.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0, maxNativeZoom: 7, maxZoom: 10, tileSize: 256, zIndex: 5, className: 'rv',
       }).addTo(R.map));
       if (R.frames.length) R.t0 = Math.min(R.t0, R.frames[0].time * 1000);
