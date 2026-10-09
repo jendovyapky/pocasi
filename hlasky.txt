@@ -31,96 +31,96 @@
 
 [radost]
 # jasno / polojasno, příjemně (cca 14–28 °C)
-{teplota}° a sluníčko. Konečně počasí, za který se nemusím stydět.
-Jasno! Dneska jsem mrak jen na poloviční úvazek.
-Venku je {teplota}°. Kdo zůstane doma, je mrak. A to říkám já.
-Modrá obloha. Jdu se schovat, ať to nekazím.
-Hezky. Fakt hezky. Až je mi to podezřelý.
+{teplota}° a sluníčko. Konečně počasí, za který se nemusíme stydět.
+Jasno! Dneska došly mraqy.
+Venku je {teplota}°. Klidně bych i vyrazil ven.
+Modrá obloha. Sluneční brýle se budou hodit.
+Hezky. Fakt hezky. Až je to podezřelý.
 
 [pohoda]
-# nic moc se neděje: oblačno, ale bez deště, mírně
+# solidní průměr., mírně
 {stav}, {teplota}°. Dá se. Nic víc, nic míň.
-Takový počasí na „jdu jen na chvilku ven“. A pak tam jsi dvě hodiny.
-{teplota}°. Mikina a jde se.
-Nic zvláštního. Počasí má dneska volnej den.
+Takový počasí na pohodu.
+{teplota}°. Mikina a jdeš.
+Nic zvláštního. Počasí na klid.
 
 [ospaly]
 # ráno, krátce po východu slunce
-Ještě spím. {teplota}° je na mě moc brzo.
-Ráno. Já jen koukám, ty si dej kafe.
+Ještě spim. {teplota}° je na mě moc brzo.
+Ráno. Já jdu ještě spát, ty si dej kafe.
 *zívá* Venku {teplota}° a {stav}. Vzbuď mě v poledne.
 Slunce vylezlo v {vychod}. Já zatím ne.
 Ráno je {teplota}°. Přes den to bude lepší. Asi.
 
 [spi]
 # noc
-Pšt, spím. Venku {teplota}°, slunce vyleze v {vychod}.
-Noc. Nebe vypnuto, hvězdy v úsporným režimu.
-Zzz… {teplota}°… zzz… deka… zzz.
-Je noc. Počasí taky spí, tak co ty.
+Pššš, spim. Venku {teplota}°, slunce vyleze v {vychod}.
+Noc. Nebe vypnuto, hvězdy fungujou, já jdu spát.
+Zzz… {teplota}°… zzz… zzz.
+Je noc. Počasí spí, ty běž taky.
 
 [smutek]
 # déšť
-Prší. Nebrečím, to jen ze mě padá voda.
+Prší. Zůstaň doma, pokud můžeš.
 {sance} % šance na déšť. Já bych tomu říkal jistota.
-Mokro. Deštník je dneska tvůj nejlepší kamarád. Hned po mně.
-Do večera asi {mm} mm. To je hodně kapek na jednoho mraka.
-Mraky dneska brečí víc než ty v pondělí ráno.
-Prší. Ideální výmluva, proč jsi neběhal.
+Mokro. Deštník je dneska tvůj kámoš, pokud nemáš auto.
+Do večera asi {mm} mm. To je hodně kapek na jeden mraq.
+Prší. Podívej se z okna, pokud mi nevěříš.
+Prší. Ideální výmluva, proč jsi nešel běhat.
 
 [znechuceni]
 # mrholení, sychravo
-Mrholí. Ani pořádně pršet to neumí. Fuj.
-Šedivo a vlhko. Takový počasí bych nepřál ani sousedovi.
-Mrholení: déšť, co se nemůže rozhodnout.
-Ten typ deště, co skoro neprší, ale mokrej jsi stejně.
+Mrholí. Fuj.
+Takový počasí dobrý max do filmu.
+Mrholí, objednal bych jídlo a zůstal doma.
+Ten typ deště, co skoro neprší, ale mokrej jseš stejně.
 
 [nuda]
 # zataženo nebo mlha (Mraq u toho koulí očima)
 Zase zataženo. Fakt originální.
-{stav}, {teplota}°. Nebe dneska nemá nápady.
-Mlha. Svět se dneska načítá pomaleji.
+{stav}, {teplota}°. Dneska nic moc.
+Mlha. Svět se dneska načítá pomalejc.
 Zataženo. Slunce má home office.
 
 [stejne]
 # šedivo a zhruba stejně jako včera (taky koulí očima)
 Ctrl+C, Ctrl+V ze včerejška.
-{teplota}° a šedo. Jako včera. A předevčírem.
-Včerejšek si dal reprízu.
+{teplota}°. Jako včera.
+To samý co včera.
 
 [strach]
 # bouřka
-Bouřka! Já se schovám a ty taky.
-Hřmí. To nejsem já, přísahám.
-Blesky. Dneska radši nikam na kopec s deštníkem.
-Nebe řve víc než soused u hokeje. Drž se pod střechou.
+Bouřka! Já se jdu schovat.
+Hřmí. Bůh děla beaty.
+Blesky. Dneska ideál jít na kopec s deštníkem.
+Hromosvod dneska nepotřebuje konkurenci. Zůstaň doma.
 
 [vztek]
 # vedro (pocitově 29 °C a víc)
-{pocitove}°?! Já se tu rozpouštím a nikdo nic.
-Vedro. Stín je dneska dražší než byt v Praze.
+{pocitove}°?! Přilepil jsem se k židli a odmítám s tím něco dělat.
+Vedro. Stín je dneska tvůj nejlepší kámoš.
 Pocitově {pocitove}°. Kdo tohle objednal?
-Venku je jak v troubě na 180. Peče se od 11 do 17.
+Režim horkovzdušný fritézy aktivován.
 
 [nervy]
 # silný vítr
-Fouká {vitr} km/h! Drž si čepici. A mě.
-Vítr. Kdybych nebyl přivázanej, už jsem v Polsku.
-Nárazy až {narazy} km/h. Plány pevně přivázat.
-Fouká tak, že ti udělá účes, o kterej jsi nestál.
+Fouká {vitr} km/h! Otevřeš deštník a seš v Polsku.
+Sousedův zahradní nábytek je na cestě k tobě. Zavři okna.
+Nárazy až {narazy} km/h. Zavři okna a ignoruj to.
+Česat se dneska fakt nemá smysl.
 
 [zima]
-# zima, mráz (pocitově pod 5 °C)
-Pocitově {pocitove}°. Brrr. I mrak by si vzal bundu.
-Zima. Mrznou mi i myšlenky.
-{pocitove}°. Čepice není slabost, čepice je čepice.
-Nos ti poděkuje za šálu.
+# zima, (pocitově 0 °C)
+Pocitově {pocitove}°. Jdu se tulit k topení.
+Zima. Klepe se mi teploměr.
+{pocitove}°. Omotej se všim, co máš.
+Dýchej přes šálu, jestli nechceš kašlat ledovou tříšť.
 
 [snih]
 # sněží (Mraq má jiskřičky v očích)
-Sněží!! Já vím, že jsi dospělej, ale stejně.
+Padá to. Jdi si stoupnout k oknu a buď rád, že nemusíš řídit.
 Sníh! Konečně ze mě padá něco hezkýho.
-Venku je to jak z Mrazíka. Jen bez happy endu na zastávce.
+Sněží. Máš přesně pět minut na to mít z toho radost.
 
 
 # ---------- Ostatní texty ----------
@@ -128,8 +128,8 @@ Venku je to jak z Mrazíka. Jen bez happy endu na zastávce.
 [pohoda-popisky]
 # popisky k číslu Pohoda venku: 5 řádků od nejlepší po nejhorší
 # (85+, 70+, 50+, 30+, zbytek)
-Paráda
+Pohodička
 Fajn
 Ujde to
-Meh
+Mhm
 Zůstaň doma
