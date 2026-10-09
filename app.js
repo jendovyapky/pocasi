@@ -202,6 +202,18 @@ function geolocate() {
       rej, { enableHighAccuracy: false, timeout: 9000, maximumAge: 10 * 60e3 });
   });
 }
+// Ptát se na polohu jen jednou: když už ji prohlížeč povolil, zjistí se potichu;
+// když ještě ne, zeptá se jen při úplně prvním spuštění nebo po ťuknutí na „Tam, kde jsem“.
+async function geoPermission() {
+  try { return (await navigator.permissions.query({ name: 'geolocation' })).state; } catch { return 'unknown'; }
+}
+async function autoLocate() {
+  const perm = await geoPermission();
+  if (perm === 'denied') return null;
+  if (perm !== 'granted' && load().geoAsked) return null; // už jsme se jednou ptali → neotravovat
+  save({ geoAsked: true });
+  return useMyLocation(true);
+}
 async function useMyLocation(silent) {
   try {
     const { lat, lon } = await geolocate();
@@ -858,7 +870,7 @@ function wire() {
   // při návratu do appky obnov, pokud jsou data starší než 10 min
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !state.place || Date.now() - (state.lastFetch || 0) < 10 * 60e3) return;
-    if (state.place.auto) useMyLocation(true).then((p) => (p ? setPlace(p) : refresh())); else refresh();
+    if (state.place.auto) autoLocate().then((p) => (p ? setPlace(p) : refresh())); else refresh();
   });
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (state.data) { buildDial(); setScrollFor(state.sel || state.nowF, false); } }, 150); });
 }
@@ -871,9 +883,9 @@ async function boot() {
   const saved = load();
   // 1) okamžitě ukaž poslední data z cache
   if (saved.place && saved.cache) { state.place = saved.place; try { ingest(saved.cache.raw, saved.cache.mraw); } catch {} }
-  // 2) poloha se zjišťuje vždycky znova (ručně vybrané město platí jen do zavření appky)
-  const p = await useMyLocation(true);
-  state.place = p || saved.place || DEFAULT_PLACE;
+  // 2) poloha se zjišťuje při každém otevření, ale ptá se jen poprvé (ručně vybrané město platí do zavření appky)
+  const p = await autoLocate();
+  state.place = p || (saved.place && { ...saved.place, auto: true }) || DEFAULT_PLACE;
   save({ place: state.place });
   await refresh();
 }
