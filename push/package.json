@@ -1,0 +1,6 @@
+{
+  "name": "mraq-push",
+  "private": true,
+  "description": "Server pro notifikace Mraqa (Cloudflare Worker)",
+  "scripts": { "deploy": "wrangler deploy" }
+}

@@ -5,6 +5,9 @@ main = "src/index.js"
 compatibility_date = "2026-06-01"
 workers_dev = true
 
+# Vlastní doména pro API (DNS je na Cloudflare, záznam se vytvoří sám)
+routes = [{ pattern = "mraq-api.jendovyapky.eu", custom_domain = true }]
+
 # Každých 15 minut zkontroluje počasí pro všechny přihlášené telefony
 [triggers]
 crons = ["*/15 * * * *"]
@@ -12,7 +15,7 @@ crons = ["*/15 * * * *"]
 # Úložiště přihlášených telefonů + VAPID klíče (Worker si je vygeneruje sám)
 [[kv_namespaces]]
 binding = "SUBS"
-id = "KV_ID_DOPLNIT"
+id = "5efc7623d9f44aa2ab0708aa945614a9"
 
 [vars]
 APP_URL = "https://mraq.jendovyapky.eu"
