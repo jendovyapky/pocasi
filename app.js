@@ -1343,7 +1343,7 @@ function wire() {
 }
 
 let mraq = null;
-// úvodní animace (jen při spuštění; ne v úsporném režimu, bez Mraqa a při „omezit pohyb“)
+// úvodní animace (jen při spuštění; vypne ji „Úsporné animace“ nebo vypnutý Mraq)
 let intro = null;
 function startIntro() {
   if (!intro) return;
@@ -1356,7 +1356,7 @@ function startIntro() {
 async function boot() {
   {
     const s0 = settings();
-    if (!s0.lite && s0.mraq !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches) try { intro = createIntro(load().introBg); } catch {}
+    if (!s0.lite && s0.mraq !== false) try { intro = createIntro(load().introBg); } catch {}
   }
   mraq = createMraq();
   window.__mraq = mraq; // pro náhledy výrazů
