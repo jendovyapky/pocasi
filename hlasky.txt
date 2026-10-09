@@ -181,6 +181,9 @@ srovnani.extrem-konec = (o {stupne}° {smer} než včera)
 # deštník/sníh: ukáže se vždycky jen první věc z řádku
 # čísla = průměrná pocitová teplota na zbytek dne (25+ °C, 20+, 15+, 10+, 4+, -2+, pod -2)
 obleceni.nadpis = Vem si:
+# v noci se „Vem si“ týká dne, kdy půjdeš ven (6–22 h):
+obleceni.nadpis-rano = Ráno si vem:
+obleceni.nadpis-zitra = Zítra si vem:
 obleceni.25 = plavky | litr vody
 obleceni.20 = tvůj nejlepší letní fit
 obleceni.20-vecer = dobrej outfit | mikinu na večer

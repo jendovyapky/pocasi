@@ -280,10 +280,13 @@ function lazyPhrase(delta) {
   return { big: delta > 0 ? S('extrem-tepleji', 'úplně jiné léto') : S('extrem-chladneji', 'úplně jiná zima'), end: S('extrem-konec', '(o {stupne}° {smer} než včera)', { stupne: Math.round(a), smer: dir }) };
 }
 
-function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
-  const H = state.data.hourly, i0 = state.i0;
-  const n = Math.max(6, 22 - new Date(H.t[i0]).getUTCHours());
+function daySummary(forWear) { // zbytek dne (teď → 22:00, min. 6 h)
+  const H = state.data.hourly, h = new Date(H.t[state.i0]).getUTCHours();
+  let i0 = state.i0, n = Math.max(6, 22 - h);
+  // „Vem si“ v noci: neřeší noc (spíš), ale den, kdy půjdeš ven → 6:00–22:00 (po 21 h zítřek)
+  if (forWear && (h >= 21 || h < 6)) { i0 = state.i0 + (h >= 21 ? 24 - h + 6 : 6 - h); n = 16; }
   const r = [...Array(n).keys()].map((k) => i0 + k).filter((i) => i < H.t.length);
+  if (!r.length) r.push(state.i0);
   const codes = r.map((i) => H.code[i]);
   return {
     range: r,
@@ -297,6 +300,8 @@ function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
     snow: codes.some((c) => kind(c) === 'snow'),
     fog: codes.filter((c) => c === 45 || c === 48).length >= 2,
     rainy: r.some((i) => H.precip[i] >= 0.3 || H.prob[i] >= 60),
+    wetHours: r.filter((i) => H.precip[i] >= 0.3).length,
+    hour: h,
     drizzle: codes.filter((c) => c >= 61).length === 0 && codes.some((c) => c >= 51 && c <= 57),
     cloudy: r.reduce((a, i) => a + H.cloud[i], 0) / r.length > 70,
   };
@@ -339,8 +344,9 @@ function wearList(s, grouped) {
   else if (f >= 4) add('4', 'bunda | něco pod ni');
   else if (f >= -2) add('-2', 'zimní bunda | čepice');
   else add('mraz', 'termoprádlo | zimní bunda | čepice | rukavice');
-  if (s.storm || s.maxProb >= 55 || s.sumRain >= 1) add('destnik', 'deštník ☂');
-  else if (s.maxProb >= 30) add('destnik-asi', 'deštník do batohu, pro jistotu');
+  // deštník jen když model opravdu počítá s deštěm (ne jen vysoká „šance“ při 0 mm)
+  if ((s.storm && s.maxProb >= 40) || s.sumRain >= 1.5 || (s.wetHours >= 2 && s.maxProb >= 50)) add('destnik', 'deštník ☂');
+  else if (s.sumRain >= 0.3 && s.maxProb >= 30) add('destnik-asi', 'deštník do batohu, pro jistotu');
   if (s.snow) add('snih', 'boty, co nepromoknou');
   if (s.maxUv >= 6) add('uv-silne', 'brýle + krém');
   else if (s.maxUv >= 4 && !s.cloudy) add('uv', 'sluneční brýle');
@@ -360,12 +366,13 @@ function renderStatic() {
   const ph = lazyPhrase(delta);
   $('#lazyBig').innerHTML = ph.big.split(' ').map((w, i) => `<span class="w" style="--d:${i}">${w}</span>`).join(' ');
   $('#lazyEnd').textContent = ph.end;
-  const sum = daySummary();
+  const sum = daySummary(), wsum = daySummary(true);
   state.delta = delta;
   // „Vem si:“ – věci jde odškrtnout (pamatuje si to do konce dne)
   const packed = wearPacked();
   const wr = $('#wear');
-  wr.innerHTML = `<span style="--d:0">${T('obleceni.nadpis', {}, 'Vem si:')}</span>` + wearPick(sum).map((w, i) =>
+  const wTitle = wsum.hour >= 21 ? T('obleceni.nadpis-zitra', {}, 'Zítra si vem:') : wsum.hour < 6 ? T('obleceni.nadpis-rano', {}, 'Ráno si vem:') : T('obleceni.nadpis', {}, 'Vem si:');
+  wr.innerHTML = `<span style="--d:0">${wTitle}</span>` + wearPick(wsum).map((w, i) =>
     `<button class="wear__item${packed.includes(w) ? ' done' : ''}" style="--d:${i + 1}" aria-pressed="${packed.includes(w)}">${w}</button>`).join('');
   // když se dvě nevejdou na řádek, nech jen tu první
   requestAnimationFrame(() => { const it = wr.querySelectorAll('.wear__item'); if (it.length > 1 && wr.scrollWidth > wr.clientWidth + 1) it[it.length - 1].remove(); });
