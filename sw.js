@@ -1,9 +1,9 @@
-// Service worker: aplikace se načte i offline, data jdou vždy nejdřív ze sítě.
-const VERSION = 'mraq-v22';
+// Service worker: appka startuje okamžitě z cache (žádná černá obrazovka), na pozadí si stáhne novou verzi → projeví se při dalším otevření.
+const VERSION = 'mraq-v23';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'mraq.js', 'intro.js', 'hlasky.txt', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/mraq.svg'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
@@ -20,11 +20,16 @@ self.addEventListener('fetch', (e) => {
     })));
     return;
   }
-  // Vlastní soubory: síť napřed (ať se hned projeví úpravy), offline z cache
+  // Vlastní soubory: hned z cache (rychlý start), zároveň se stáhne čerstvá verze do cache na příště.
+  // Co v cache není, jde ze sítě.
   if (url.origin === location.origin) {
-    e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((res) => {
-      const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); return res;
-    }).catch(() => caches.match(e.request).then((r) => r || caches.match('index.html'))));
+    const key = e.request.mode === 'navigate' ? 'index.html' : e.request;
+    const fresh = fetch(e.request, { cache: 'no-cache' }).then((res) => {
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(key, copy)); }
+      return res;
+    });
+    e.waitUntil(fresh.catch(() => {}));
+    e.respondWith(caches.match(key, { ignoreSearch: e.request.mode === 'navigate' }).then((r) => r || fresh).catch(() => caches.match('index.html')));
   }
 });
 

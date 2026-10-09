@@ -1350,13 +1350,13 @@ function startIntro() {
   const h = new Date().getHours(), night = h < 7 || h >= 19;
   const sp = state.skyPal || (night ? { sky: ['#1c2137', '#272d47', '#191d40'], glow: '#c9ccff', sx: .74, sy: .14, dark: true }
     : { sky: ['#91b8e3', '#a9cce2', '#badbd2'], glow: '#fff6d6', sx: .8, sy: .12, dark: false });
-  save({ introBg: sp.sky[0] });
   intro.start(sp); intro = null;
 }
 async function boot() {
   {
     const s0 = settings();
-    if (!s0.lite && s0.mraq !== false) try { intro = createIntro(load().introBg); } catch {}
+    if (!s0.lite && s0.mraq !== false) try { intro = createIntro('#1b1d2b'); } catch {}
+    document.documentElement.classList.remove('boot');
   }
   mraq = createMraq();
   window.__mraq = mraq; // pro náhledy výrazů

@@ -76,8 +76,10 @@ export function createIntro(first) {
   const cv = document.createElement('canvas');
   cv.className = 'intro';
   cv.setAttribute('aria-hidden', 'true');
-  cv.style.background = first || '#1c2137';
+  first = first || '#1b1d2b';
+  cv.style.background = first;
   document.body.appendChild(cv);
+  document.documentElement.classList.remove('boot'); // plátno už kryje appku
   let done = false, raf = 0, resolve;
   const finished = new Promise((r) => (resolve = r));
   const app = document.getElementById('app');
@@ -164,8 +166,8 @@ export function createIntro(first) {
       g.restore();
       const hz = sstep(clamp((0.3 - (1 - cam.z)) / 0.22));
       if (hz > 0) { g.fillStyle = rgba(haze, hz); g.fillRect(0, 0, W, H); }
-      const fin = 1 - outC(seg(t, 0, 220));
-      if (fin > 0) { g.fillStyle = rgba(hex(first || o.sky[0]), fin); g.fillRect(0, 0, W, H); }
+      const fin = 1 - outC(seg(t, 0, 320));
+      if (fin > 0) { g.fillStyle = rgba(hex(first), fin); g.fillRect(0, 0, W, H); }
       // konec: appka se vynoří z mlhy
       const k = seg(t, 1790, LEN), e = outQ(k);
       if (app) app.style.transform = k > 0 ? `scale(${lerp(1.07, 1, e)})` : 'scale(1.07)';
