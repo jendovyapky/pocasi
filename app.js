@@ -129,6 +129,10 @@ function applySky(f) {
   p = p.map((c) => mix(c, grey, cloud * 0.55));
   if (rain > 0.1 || kind(code) === 'rain' || kind(code) === 'storm') p = p.map((c) => mix(c, night ? '#1b2233' : '#6f7d93', clamp(0.25 + rain * 0.15, 0, 0.6)));
   if (kind(code) === 'snow') p = p.map((c) => mix(c, night ? '#3a4157' : '#e9eef5', 0.35));
+  // vzhled: tmavý = barvy denní doby zůstanou, jen ztlumené do noční modré; světlý = noc se zesvětlí
+  const theme = themeNow();
+  if (theme === 'dark') p = p.map((c, i) => mix(c, i === 3 ? '#2a2840' : '#101117', i === 3 ? .4 : .66));
+  else if (theme === 'light' && night) p = p.map((c, i) => mix(c, i === 3 ? '#ffd9a8' : '#dcdff3', .62));
 
   const root = document.documentElement.style;
   root.setProperty('--c1', p[0]); root.setProperty('--c2', p[1]);
@@ -138,7 +142,7 @@ function applySky(f) {
   root.setProperty('--sx', `${clamp(10 + t * 80, -10, 110)}%`);
   root.setProperty('--sy', `${t > 0 && t < 1 ? 38 - Math.sin(Math.PI * t) * 26 : 70}%`);
 
-  const dark = (lum(p[0]) + lum(p[1])) / 2 < 0.42;
+  const dark = theme === 'dark' || (theme !== 'light' && (lum(p[0]) + lum(p[1])) / 2 < 0.42);
   document.body.classList.toggle('dark', dark);
   $('#sky').classList.toggle('rain', rain > 0.2 || kind(code) === 'rain' || kind(code) === 'storm');
   document.querySelector('meta[name=theme-color]').content = p[0];
@@ -1070,9 +1074,15 @@ async function search(q) {
 
 /* ---------------- Nastavení + notifikace ---------------- */
 const PUSH_API = 'https://mraq-api.jendovyapky.eu';
-const DEF_SETTINGS = { mraq: true, vibrate: true, lite: false, placeMode: 'auto', fixed: null, notif: { morning: false, time: '07:00', rain: false, extreme: false }, pushKey: '' };
+const DEF_SETTINGS = { theme: 'auto', mraq: true, vibrate: true, lite: false, placeMode: 'auto', fixed: null, notif: { morning: false, time: '07:00', rain: false, extreme: false }, pushKey: '' };
 const settings = () => { const s = load().settings || {}; return { ...DEF_SETTINGS, ...s, notif: { ...DEF_SETTINGS.notif, ...(s.notif || {}) } }; };
 const saveSettings = (patch) => save({ settings: { ...settings(), ...patch } });
+// 'auto' = podle telefonu: tmavý systém → tmavá appka, světlý → obloha podle denní doby (v noci tmavá)
+function themeNow() {
+  const t = (load().settings || {}).theme || 'auto';
+  if (t === 'auto') return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'sky';
+  return t;
+}
 const notifOn = (n = settings().notif) => n.morning || n.rain || n.extreme;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -1096,6 +1106,7 @@ function openSettings() {
   $('#nRain').checked = s.notif.rain; $('#nExtreme').checked = s.notif.extreme;
   $('#pmAuto').checked = s.placeMode !== 'fixed'; $('#pmFixed').checked = s.placeMode === 'fixed';
   $('#pmFixedName').textContent = s.placeMode === 'fixed' && s.fixed ? s.fixed.name : `${state.place?.name || '—'} (to, co máš teď otevřené)`;
+  document.querySelectorAll('#themeSeg button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.theme));
   $('#sMraq').checked = s.mraq; $('#sVibrate').checked = s.vibrate; $('#sLite').checked = s.lite;
   $('#setAbout').innerHTML = `Mraq · předpověď Open-Meteo · radar RainViewer<br>Hlášky si píše Honza.`;
   notifStatus();
@@ -1171,6 +1182,13 @@ function wireSettings() {
       hint(r.ok ? 'Odesláno. Za pár vteřin by měla cinknout.' : `Nepovedlo se (${r.status || r.error}).`);
     } catch { hint('Nepovedlo se. Jsou notifikace zapnuté?'); }
   };
+  $('#themeSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    saveSettings({ theme: b.dataset.v });
+    document.querySelectorAll('#themeSeg button').forEach((x) => x.classList.toggle('on', x === b));
+    if (state.data) applySky(state.sel ?? state.nowF);
+  });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => state.data && applySky(state.sel ?? state.nowF));
   $('#sMraq').onchange = (e) => { saveSettings({ mraq: e.target.checked }); applySettings(); };
   $('#sVibrate').onchange = (e) => saveSettings({ vibrate: e.target.checked });
   $('#sLite').onchange = (e) => { saveSettings({ lite: e.target.checked }); applySettings(); };
