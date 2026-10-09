@@ -39,7 +39,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - Časy z API jsou lokální časy místa → `parseLocal()` je ukládá jako UTC ms a všude se používají `getUTC*()`. „Teď“ = `Date.now() + utc_offset`.
 - `compareYesterday()` – průměr pocitové teploty 8–21 h dnes vs. včera → `lazyPhrase()` („trochu tepleji“, „o dost chladněji“, „zhruba stejně“…).
 - `mascotMood(f)` – nálada Mraqa podle počasí v čase `f` (bouřka → strach, 22–9 h spí, 9–10:30 ospalej, déšť → smutek, vedro → vztek…); mění se i při posouvání časové osy. První hláška dne je deterministická podle data + místa.
-- `wearList()` – „Vem si:“ podle pocitové teploty, deště, UV, větru.
+- `wearList()` – „Vem si:“ podle pocitové teploty, deště, UV, větru. Věci jde ťuknutím odškrtnout (tmavá pilulka s ✓), pamatuje se do konce dne (`localStorage` → `wear`).
 - `palAt()` / `applySky()` – barvy oblohy podle polohy slunce (noc, svítání, ráno, den, zlatá hodinka, soumrak), mix do šeda podle oblačnosti, při dešti čárky.
 - Časová osa dole: horizontální scroller, 44 px = 1 hodina, 36 h dopředu; `renderAt(f)` překreslí teplotu, oblohu, slunce a karty pro desetinný index hodiny. ▶ přehraje den.
 - `mood()` / `moodParts()` – „Pohoda venku“ 0–100 = 100 minus body za teplotu (od 21 °C), déšť, vítr, mraky a tmu; karta ukazuje, co to nejvíc kazí, a kdy bude nejlíp.

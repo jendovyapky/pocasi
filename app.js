@@ -267,6 +267,14 @@ function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
     cloudy: r.reduce((a, i) => a + H.cloud[i], 0) / r.length > 70,
   };
 }
+function wearPacked() { const w = load().wear; return w && w.day === dayKey(nowLocal()) ? w.items : []; }
+function toggleWear(btn) {
+  const item = btn.textContent, items = wearPacked().slice(), k = items.indexOf(item);
+  if (k >= 0) items.splice(k, 1); else items.push(item);
+  save({ wear: { day: dayKey(nowLocal()), items } });
+  btn.classList.toggle('done', k < 0); btn.setAttribute('aria-pressed', k < 0);
+  navigator.vibrate?.(k < 0 ? [6, 40, 6] : 4);
+}
 function wearList(s) {
   const f = (s.maxFeels + s.minFeels) / 2;
   const w = [];
@@ -302,7 +310,10 @@ function renderStatic() {
   $('#lazyEnd').textContent = ph.end;
   const sum = daySummary();
   state.delta = delta;
-  $('#wear').innerHTML = [T('obleceni.nadpis', {}, 'Vem si:'), ...wearList(sum)].map((w, i) => `<span style="--d:${i}">${w}</span>`).join('');
+  // „Vem si:“ – věci jde odškrtnout (pamatuje si to do konce dne)
+  const packed = wearPacked();
+  $('#wear').innerHTML = `<span style="--d:0">${T('obleceni.nadpis', {}, 'Vem si:')}</span>` + wearList(sum).map((w, i) =>
+    `<button class="wear__item${packed.includes(w) ? ' done' : ''}" style="--d:${i + 1}" aria-pressed="${packed.includes(w)}">${w}</button>`).join('');
 
   // pohoda – vlnka na 24 h (po půl hodinách) + kdy je nejlíp
   const moods = [...Array(48).keys()].map((k) => mood(state.i0 + k / 2));
@@ -1138,6 +1149,7 @@ function wire() {
   $('#wave').addEventListener('click', (e) => { const w = e.target.closest('i'); if (w) setScrollFor(state.i0 + +w.dataset.k / 2, true); });
   $('#moodBest').onclick = () => state.best && setScrollFor(state.best.f, true);
   wireSunDrag();
+  $('#wear').addEventListener('click', (e) => { const b = e.target.closest('.wear__item'); if (b) toggleWear(b); });
   $('#buddy').addEventListener('click', (e) => { if (!e.target.closest('#orb')) mraq?.react(); });
   // při návratu do appky obnov, pokud jsou data starší než 10 min
   document.addEventListener('visibilitychange', () => {
