@@ -33,6 +33,9 @@ const FALLBACK = {
   'pohoda-popisky': ['Paráda', 'Fajn', 'Ujde to', 'Meh', 'Zůstaň doma'],
 };
 export let LINES = { ...FALLBACK };
+export const TEXTS = {}; // sekce [texty]: klíč = text
+/** Text z hlasky.txt (sekce [texty]) s doplněnými proměnnými; když chybí, použije se výchozí. */
+export const T = (key, vars = {}, def = '') => (TEXTS[key] ?? def).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
 export async function loadLines() {
   try {
     const r = await fetch('hlasky.txt', { cache: 'no-cache' });
@@ -43,6 +46,7 @@ export async function loadLines() {
       if (!l || l.startsWith('#')) continue;
       const m = l.match(/^\[(.+)\]$/);
       if (m) { cur = m[1].trim().toLowerCase(); out[cur] = out[cur] || []; continue; }
+      if (cur === 'texty') { const kv = l.match(/^([\w.\-]+)\s*=\s*(.*)$/); if (kv) TEXTS[kv[1]] = kv[2]; continue; }
       if (cur) out[cur].push(l);
     }
     for (const k of Object.keys(out)) if (out[k].length) LINES[k] = out[k];

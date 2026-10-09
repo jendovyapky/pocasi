@@ -42,7 +42,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - `palAt()` / `applySky()` – barvy oblohy podle polohy slunce (noc, svítání, ráno, den, zlatá hodinka, soumrak), mix do šeda podle oblačnosti, při dešti čárky.
 - Časová osa dole: horizontální scroller, 44 px = 1 hodina, 36 h dopředu; `renderAt(f)` překreslí teplotu, oblohu, slunce a karty pro desetinný index hodiny. ▶ přehraje den.
 - `mood()` / `moodParts()` – „Pohoda venku“ 0–100 = 100 minus body za teplotu (od 21 °C), déšť, vítr, mraky a tmu; karta ukazuje, co to nejvíc kazí, a kdy bude nejlíp.
-- Sluníčko na oblouku jde táhnout prstem → posouvá čas (`sunTimeFromPoint`).
+- Sluníčko jde táhnout prstem jako kolečko: vodorovný posun = čas, celá šířka grafu = jeden den, za pravým koncem plynule navazuje další den (`wireSunDrag`, `sunXToMs`/`sunMsToX`).
 - Poloha: při každém otevření se zjišťuje znovu, ale o povolení se appka ptá jen jednou (`autoLocate()` + `navigator.permissions`, příznak `geoAsked`); jinak bere poslední místo. Ručně vybrané město platí jen do zavření.
 - Radar: celá obrazovka, tmavá Esri mapa, osa −2 h … +3 h. Minulost = RainViewer snímky. Budoucnost = vlastní odhad: `estimateMotion()` porovná poslední snímek se snímkem o 30 min starším (dlaždice zoom 6 do canvasu, hledá posun s nejmenším rozdílem) a poslední snímek posouvá CSS transformem, postupně slábne; čísla pro místo z `minutely_15` (RainViewer nowcast od 2026 nedává; kdyby se vrátil v `radar.nowcast`, kód ho použije).
 - Poslední data se drží v `localStorage` (`lino:v1`) → appka funguje i offline.

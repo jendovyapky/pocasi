@@ -1,5 +1,5 @@
 // Service worker: aplikace se načte i offline, data jdou vždy nejdřív ze sítě.
-const VERSION = 'mraq-v3';
+const VERSION = 'mraq-v4';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'mraq.js', 'hlasky.txt', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/mraq.svg'];
 
 self.addEventListener('install', (e) => {

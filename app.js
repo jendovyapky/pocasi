@@ -1,5 +1,5 @@
 /* Mraq — počasí pro líné. Logika bez frameworku a bez buildu (maskot je v mraq.js). */
-import { createMraq, loadLines, LINES } from './mraq.js';
+import { createMraq, loadLines, LINES, T } from './mraq.js';
 
 const $ = (s) => document.querySelector(s);
 const HOUR = 3600e3;
@@ -220,7 +220,7 @@ async function useMyLocation(silent) {
     const nm = await reverseName(lat, lon);
     return { lat, lon, ...nm, auto: true };
   } catch {
-    if (!silent) toast('Polohu jsi nepovolil. Tak aspoň Praha.');
+    if (!silent) toast(T('hlaska.poloha-zakazana', {}, 'Polohu jsi nepovolil. Tak aspoň Praha.'));
     return null;
   }
 }
@@ -238,11 +238,12 @@ function compareYesterday() {
 }
 function lazyPhrase(delta) {
   const a = Math.abs(delta);
-  if (a < 1.5) return { big: 'zhruba stejně', end: 'jako včera' };
-  const dir = delta > 0 ? 'tepleji' : 'chladněji';
-  if (a < 4) return { big: `trochu ${dir}`, end: 'než včera' };
-  if (a < 8) return { big: `o dost ${dir}`, end: 'než včera' };
-  return { big: delta > 0 ? 'úplně jiné léto' : 'úplně jiná zima', end: `(o ${Math.round(a)}° ${dir} než včera)` };
+  const S = (k, d, v) => T('srovnani.' + k, v, d);
+  if (a < 1.5) return { big: S('stejne', 'zhruba stejně'), end: S('stejne-konec', 'jako včera') };
+  const dir = delta > 0 ? S('tepleji', 'tepleji') : S('chladneji', 'chladněji');
+  if (a < 4) return { big: S('trochu', 'trochu {smer}', { smer: dir }), end: S('konec', 'než včera') };
+  if (a < 8) return { big: S('dost', 'o dost {smer}', { smer: dir }), end: S('konec', 'než včera') };
+  return { big: delta > 0 ? S('extrem-tepleji', 'úplně jiné léto') : S('extrem-chladneji', 'úplně jiná zima'), end: S('extrem-konec', '(o {stupne}° {smer} než včera)', { stupne: Math.round(a), smer: dir }) };
 }
 
 function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
@@ -269,19 +270,21 @@ function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
 function wearList(s) {
   const f = (s.maxFeels + s.minFeels) / 2;
   const w = [];
-  if (f >= 25) w.push('triko', 'kraťasy');
-  else if (f >= 20) w.push('triko', s.minFeels < 15 ? 'něco přes na večer' : 'lehké kalhoty');
-  else if (f >= 15) w.push('lehká mikina');
-  else if (f >= 10) w.push('mikina', 'lehká bunda');
-  else if (f >= 4) w.push('bunda', 'něco pod ni');
-  else if (f >= -2) w.push('zimní bunda', 'čepice');
-  else w.push('termoprádlo', 'zimní bunda', 'čepice', 'rukavice');
-  if (s.storm || s.maxProb >= 55 || s.sumRain >= 1) w.push('deštník ☂');
-  else if (s.maxProb >= 30) w.push('deštník do batohu, pro jistotu');
-  if (s.snow) w.push('boty, co nepromoknou');
-  if (s.maxUv >= 6) w.push('brýle + krém');
-  else if (s.maxUv >= 4 && !s.cloudy) w.push('sluneční brýle');
-  if (s.maxWind > 38) w.push('nic, co uletí');
+  // každá položka v hlasky.txt může mít víc věcí oddělených „ | “
+  const add = (k, d) => w.push(...T('obleceni.' + k, {}, d).split('|').map((x) => x.trim()).filter(Boolean));
+  if (f >= 25) add('25', 'triko | kraťasy');
+  else if (f >= 20) add(s.minFeels < 15 ? '20-vecer' : '20', s.minFeels < 15 ? 'triko | něco přes na večer' : 'triko | lehké kalhoty');
+  else if (f >= 15) add('15', 'lehká mikina');
+  else if (f >= 10) add('10', 'mikina | lehká bunda');
+  else if (f >= 4) add('4', 'bunda | něco pod ni');
+  else if (f >= -2) add('-2', 'zimní bunda | čepice');
+  else add('mraz', 'termoprádlo | zimní bunda | čepice | rukavice');
+  if (s.storm || s.maxProb >= 55 || s.sumRain >= 1) add('destnik', 'deštník ☂');
+  else if (s.maxProb >= 30) add('destnik-asi', 'deštník do batohu, pro jistotu');
+  if (s.snow) add('snih', 'boty, co nepromoknou');
+  if (s.maxUv >= 6) add('uv-silne', 'brýle + krém');
+  else if (s.maxUv >= 4 && !s.cloudy) add('uv', 'sluneční brýle');
+  if (s.maxWind > 38) add('vitr', 'nic, co uletí');
   return w;
 }
 
@@ -299,7 +302,7 @@ function renderStatic() {
   $('#lazyEnd').textContent = ph.end;
   const sum = daySummary();
   state.delta = delta;
-  $('#wear').innerHTML = ['Vem si:', ...wearList(sum)].map((w, i) => `<span style="--d:${i}">${w}</span>`).join('');
+  $('#wear').innerHTML = [T('obleceni.nadpis', {}, 'Vem si:'), ...wearList(sum)].map((w, i) => `<span style="--d:${i}">${w}</span>`).join('');
 
   // pohoda – vlnka na 24 h (po půl hodinách) + kdy je nejlíp
   const moods = [...Array(48).keys()].map((k) => mood(state.i0 + k / 2));
@@ -308,7 +311,8 @@ function renderStatic() {
   $('#waveMid').textContent = hhmm(H.t[state.i0 + 12]);
   state.best = { k: best, f: state.i0 + best / 2, m: moods[best] };
   const bestMs = H.t[state.i0] + best * HOUR / 2;
-  $('#moodBest').textContent = best <= 1 ? 'nejlíp je teď' : `nejlíp ${dayKey(bestMs) !== dayKey(now) ? 'zítra ' : ''}${hhmm(bestMs)}`;
+  $('#moodBest').textContent = best <= 1 ? T('pohoda.nejlip-ted', {}, 'nejlíp je teď')
+    : T('pohoda.nejlip', { cas: `${dayKey(bestMs) !== dayKey(now) ? T('slovo.zitra', {}, 'zítra') + ' ' : ''}${hhmm(bestMs)}` }, 'nejlíp {cas}');
 
   // déšť – sloupce na 12 h: výška = šance, modrá = opravdu naprší
   const cols = [...Array(12).keys()].map((k) => state.i0 + k);
@@ -347,9 +351,9 @@ function moodParts(f) { // kolik bodů z 100 bere teplota, déšť, vítr, mraky
   const feels = at(H.feels, f), prob = at(H.prob, f), wind = at(H.wind, f), cloud = at(H.cloud, f), rain = at(H.precip, f);
   const isDay = at(H.isDay, f) > 0.5;
   return {
-    [feels < 21 ? (feels < 10 ? 'zima' : 'chládek') : (feels > 27 ? 'vedro' : 'teplo')]: Math.abs(feels - 21) * 3.2,
-    'déšť': prob * 0.35 + rain * 12,
-    'vítr': Math.max(0, wind - 15) * 0.9,
+    [feels < 21 ? (feels < 10 ? 'zima' : 'chladek') : (feels > 27 ? 'vedro' : 'teplo')]: Math.abs(feels - 21) * 3.2,
+    'dest': prob * 0.35 + rain * 12,
+    'vitr': Math.max(0, wind - 15) * 0.9,
     'mraky': cloud * 0.1,
     'tma': isDay ? 0 : 8,
   };
@@ -360,7 +364,8 @@ function mood(f) {
 }
 function moodWhy(f) {
   const [k, v] = Object.entries(moodParts(f)).sort((a, b) => b[1] - a[1])[0];
-  return v < 9 ? 'nic to nekazí' : `kazí to ${k}`;
+  const CO = { zima: 'zima', chladek: 'chládek', teplo: 'teplo', vedro: 'vedro', dest: 'déšť', vitr: 'vítr', mraky: 'mraky', tma: 'tma' };
+  return v < 9 ? T('pohoda.nic', {}, 'nic to nekazí') : T('pohoda.kazi', { co: T('pohoda.co.' + k, {}, CO[k]) }, 'kazí to {co}');
 }
 const moodLabel = (m) => { const l = LINES['pohoda-popisky'] || []; return l[m >= 85 ? 0 : m >= 70 ? 1 : m >= 50 ? 2 : m >= 30 ? 3 : 4] || ''; };
 const fmtMm = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',');
@@ -428,14 +433,14 @@ function rainSentence() {
     const first = m.findIndex((x) => x.p >= 0.1);
     if (first === 0) {
       const stop = m.findIndex((x) => x.p < 0.05);
-      return stop > 0 ? `Prší. Podle modelu přestane kolem ${hhmm(m[stop].t)}.` : 'Prší a jen tak nepřestane.';
+      return stop > 0 ? T('dest.prsi-prestane', { cas: hhmm(m[stop].t) }, 'Prší. Podle modelu přestane kolem {cas}.') : T('dest.prsi-neprestane', {}, 'Prší a jen tak nepřestane.');
     }
-    if (first > 0) return `Pozor, kolem ${hhmm(m[first].t)} začne pršet.`;
+    if (first > 0) return T('dest.zacne', { cas: hhmm(m[first].t) }, 'Pozor, kolem {cas} začne pršet.');
   }
-  if (nowWet) { const stop = r.find((i) => H.precip[i] < 0.1); return stop ? `Prší. Konec v plánu kolem ${hhmm(H.t[stop])}.` : 'Prší a celý den to vypadá stejně.'; }
+  if (nowWet) { const stop = r.find((i) => H.precip[i] < 0.1); return stop ? T('dest.prsi-konec', { cas: hhmm(H.t[stop]) }, 'Prší. Konec v plánu kolem {cas}.') : T('dest.prsi-celyden', {}, 'Prší a celý den to vypadá stejně.'); }
   const start = r.find((i) => H.precip[i] >= 0.2 || H.prob[i] >= 60);
-  if (start == null) return 'Dalších 24 hodin sucho. Deštník může zůstat doma.';
-  return `Do ${hhmm(H.t[start])} sucho, pak to začne kapat.`;
+  if (start == null) return T('dest.sucho24', {}, 'Dalších 24 hodin sucho. Deštník může zůstat doma.');
+  return T('dest.sucho-do', { cas: hhmm(H.t[start]) }, 'Do {cas} sucho, pak to začne kapat.');
 }
 
 /* ---------------- Render: podle vybraného času ---------------- */
@@ -478,7 +483,7 @@ function renderAt(f) {
   $('#rainNum').innerHTML = `${Math.round(at(H.prob, f))}<small>%</small>`;
   $('#rainHead').textContent = isNow ? 'šance teď' : `šance v ${hhmm(H.t[i])}`;
   const mmNow = H.precip[i] ?? 0;
-  $('#rainMm').textContent = mmNow >= 0.1 ? `naprší ~${fmtMm(mmNow)} mm/h` : 'nic nenaprší';
+  $('#rainMm').textContent = mmNow >= 0.1 ? T('dest.karta-mm', { mm: fmtMm(mmNow) }, 'naprší ~{mm} mm/h') : T('dest.karta-sucho', {}, 'nic nenaprší');
   document.querySelectorAll('#rainBars .b').forEach((el) => el.classList.toggle('sel', +el.dataset.i === i));
 
   updateMascot(f);
@@ -527,61 +532,68 @@ function renderSun(ms) {
   }
 }
 
-/* ---------------- Tahání sluníčka po oblouku = posun času ---------------- */
-function sunTimeFromPoint(x, y) {
-  // najdi nejbližší bod na oblouku nebo na nočních „ocáscích“ a převeď ho na čas
-  const H = state.data.hourly, D = state.data.daily;
-  const paths = [['arc', $('#arc')], ['R', $('#tailR')], ['L', $('#tailL')]];
-  let best = null;
-  for (const [id, p] of paths) {
-    const len = p.getTotalLength();
-    for (let k = 0; k <= 240; k++) {
-      const pt = p.getPointAtLength((len * k) / 240), d = (pt.x - x) ** 2 + (pt.y - y) ** 2;
-      if (!best || d < best.d) best = { id, u: k / 240, d };
-    }
+/* ---------------- Tahání sluníčka = posun času ----------------
+   Funguje jako kolečko: táhneš doprava → čas jde dopředu, doleva → dozadu. Celá šířka grafu = jeden den
+   (levý ocásek = noc před východem, oblouk = den, pravý ocásek = noc po západu). Za pravým koncem
+   plynule navazuje další den, takže jde táhnout přes půlnoc a dál do zítřka. */
+const SUN_W = 340, SUN_L = 50, SUN_R = 290;
+function sunDayFrame(di) {
+  const D = state.data.daily;
+  const rise = D.sunrise[di], set = D.sunset[di];
+  if (rise == null || set == null) return null;
+  const prevSet = D.sunset[di - 1] ?? set - 24 * HOUR, nextRise = D.sunrise[di + 1] ?? rise + 24 * HOUR;
+  return { rise, set, m0: (prevSet + rise) / 2, m1: (set + nextRise) / 2 };
+}
+function sunXToMs(X, di0) {
+  const k = Math.floor(X / SUN_W), x = X - k * SUN_W, F = sunDayFrame(di0 + k);
+  if (!F) return null;
+  if (x < SUN_L) return F.m0 + (x / SUN_L) * (F.rise - F.m0);
+  if (x < SUN_R) return F.rise + ((x - SUN_L) / (SUN_R - SUN_L)) * (F.set - F.rise);
+  return F.set + ((x - SUN_R) / (SUN_W - SUN_R)) * (F.m1 - F.set);
+}
+function sunMsToX(ms, di0) {
+  for (let k = -1; k <= 3; k++) {
+    const F = sunDayFrame(di0 + k); if (!F || ms < F.m0 || ms >= F.m1) continue;
+    const x = ms < F.rise ? ((ms - F.m0) / (F.rise - F.m0)) * SUN_L
+      : ms < F.set ? SUN_L + ((ms - F.rise) / (F.set - F.rise)) * (SUN_R - SUN_L)
+        : SUN_R + ((ms - F.set) / (F.m1 - F.set)) * (SUN_W - SUN_R);
+    return k * SUN_W + x;
   }
-  const selMs = at(H.t, state.sel ?? state.nowF);
-  const { di: di0 } = sunPhase(selMs);
-  const toMs = (di) => {
-    const rise = D.sunrise[di], set = D.sunset[di];
-    if (rise == null || set == null) return null;
-    if (best.id === 'arc') return rise + best.u * (set - rise);
-    if (best.id === 'R') { const nr = D.sunrise[di + 1] ?? rise + 24 * HOUR; return set + best.u * 0.5 * (nr - set); }
-    const ps = D.sunset[di - 1] ?? set - 24 * HOUR; return rise - best.u * 0.5 * (rise - ps);
-  };
-  let ms = toMs(di0);
-  const now = nowLocal();
-  if (ms != null && ms < now) {
-    // do minulosti to nejde: ve dne se sluníčko zastaví na „teď“, zítřek jen když táhneš do noci/rána, které už dnes byly
-    const { di: dn } = sunPhase(now);
-    const daytimeNow = now >= D.sunrise[dn] && now <= D.sunset[dn];
-    if (daytimeNow && best.id === 'arc') ms = now;
-    else if (best.id === 'R' && ms > now - HOUR) ms = now;
-    else { const next = toMs(di0 + 1); ms = next ?? now; }
-  }
-  if (ms == null) return null;
-  return clamp((ms - H.t[0]) / HOUR, state.nowF, state.i0 + state.span);
+  return 0;
 }
 function wireSunDrag() {
-  const svg = $('#sunSvg'), dot = $('#sunDot');
-  let dragging = false, start = null;
-  const move = (e) => {
-    if (!dragging || !state.data) return;
-    // malé cuknutí při chycení ignoruj, ať sluníčko neuskočí
-    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8) return;
-    start = null;
-    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-    const f = sunTimeFromPoint(p.x, p.y);
-    if (f != null) { stopPlay(); setScrollFor(f, false); }
-  };
-  dot.addEventListener('pointerdown', (e) => {
-    dragging = true; start = { x: e.clientX, y: e.clientY }; dot.setPointerCapture(e.pointerId);
-    document.body.classList.add('sundrag'); navigator.vibrate?.(6); e.preventDefault();
+  // táhnout jde za sluníčko i kdekoli jinde na grafu (vodorovně); svislý pohyb dál scrolluje stránku
+  const svg = $('#sunSvg');
+  let drag = null;
+  const svgX = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()).x; };
+  svg.addEventListener('pointerdown', (e) => {
+    if (!state.data) return;
+    const H = state.data.hourly;
+    const di0 = sunPhase(nowLocal()).di;
+    drag = { di0, x0: svgX(e), cx: e.clientX, cy: e.clientY, X0: sunMsToX(at(H.t, state.sel ?? state.nowF), di0), on: false, id: e.pointerId };
+    if (e.target.closest('#sunDot')) { drag.on = true; svg.setPointerCapture(e.pointerId); stopPlay(); document.body.classList.add('sundrag'); navigator.vibrate?.(6); }
   });
-  dot.addEventListener('pointermove', move);
-  const end = () => { dragging = false; document.body.classList.remove('sundrag'); };
-  dot.addEventListener('pointerup', end); dot.addEventListener('pointercancel', end);
+  svg.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = svgX(e) - drag.x0;
+    if (!drag.on) {
+      const mx = Math.abs(e.clientX - drag.cx), my = Math.abs(e.clientY - drag.cy);
+      if (my > 8 && my > mx) { drag = null; return; } // svislý pohyb → nech scrollovat
+      if (mx < 6) return;
+      drag.on = true; svg.setPointerCapture(drag.id); stopPlay(); document.body.classList.add('sundrag');
+    } else if (Math.abs(dx) < 3) return;
+    const H = state.data.hourly;
+    const lo = nowLocal(), hi = H.t[Math.min(H.t.length - 1, state.i0 + state.span)];
+    let ms = sunXToMs(drag.X0 + dx, drag.di0);
+    if (ms == null) return;
+    if (ms < lo || ms > hi) { // na konci osy se zastav a „nenavíjej“ dál, ať jde hned zpátky
+      ms = clamp(ms, lo, hi);
+      drag.X0 = sunMsToX(ms, drag.di0) - dx;
+    }
+    setScrollFor((ms - H.t[0]) / HOUR, false);
+  });
+  const end = () => { drag = null; document.body.classList.remove('sundrag'); };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
 }
 
 /* ---------------- Časová osa (scrubber) ---------------- */
@@ -656,7 +668,7 @@ function loadLeaflet() {
 }
 const placeTime = (epoch) => hhmm(epoch + state.data.offset);
 const future = () => (state.minutely || []).map((x) => ({ t: x.t - state.data.offset, p: x.p }));
-const intensity = (mm15) => { const h = mm15 * 4; return h < 0.1 ? 'sucho' : h < 1 ? 'slabý déšť' : h < 4 ? 'déšť' : h < 10 ? 'silný déšť' : 'liják'; };
+const intensity = (mm15) => { const h = mm15 * 4; return h < 0.1 ? T('radar.sucho', {}, 'sucho') : h < 1 ? T('radar.slaby', {}, 'slabý déšť') : h < 4 ? T('radar.dest', {}, 'déšť') : h < 10 ? T('radar.silny', {}, 'silný déšť') : T('radar.lijak', {}, 'liják'); };
 
 async function openRadar() {
   const el = $('#radarSheet');
@@ -671,7 +683,7 @@ async function openRadar() {
     await loadLeaflet();
     const L = window.L;
     if (!R.map) {
-      R.map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 10, minZoom: 3, zoomSnap: 0.5 });
+      R.map = L.map('map', { zoomControl: false, attributionControl: false, maxZoom: 10, minZoom: 3, zoomSnap: 0.5 });
       R.map.createPane('labels'); R.map.getPane('labels').style.zIndex = 450; R.map.getPane('labels').style.pointerEvents = 'none';
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© Esri · <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Weather data by RainViewer</a>', maxZoom: 10,
@@ -689,21 +701,24 @@ async function openRadar() {
     if (Date.now() - R.loadedAt > 4 * 60e3 || !R.frames.length) {
       const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
       R.layers.forEach((l) => R.map.removeLayer(l));
-      R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])]; // nowcast RainViewer od 2026 nedává, ale kdyby se vrátil, použije se R.loadedAt = Date.now(); R.shown = -1;
+      // nowcast RainViewer od 2026 nedává, ale kdyby se vrátil, použije se
+      R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])];
+      R.loadedAt = Date.now(); R.shown = -1; R.ready = [];
       // poslední snímek se v budoucnu posouvá → načíst dlaždice i kus mimo obrazovku, ať nezůstane ostrý okraj
       const Padded = L.TileLayer.extend({ _getTiledPixelBounds(c) {
         const b = L.TileLayer.prototype._getTiledPixelBounds.call(this, c), s = b.getSize();
         return L.bounds(b.min.subtract(s), b.max.add(s));
       } });
+      // nejdřív jen nejnovější snímek (rychle něco vidět), starší se dotahují postupně na pozadí
       R.layers = R.frames.map((fr, k) => new (k === R.frames.length - 1 ? Padded : L.TileLayer)(`${R.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0, maxNativeZoom: 7, maxZoom: 10, tileSize: 256, zIndex: 5, className: 'rv',
-      }).addTo(R.map));
+      }).on('load', () => { R.ready[k] = true; setRadarTime(R.sel); preloadNext(); }));
+      if (R.layers.length) R.layers[R.layers.length - 1].addTo(R.map);
       if (R.frames.length) R.t0 = Math.min(R.t0, R.frames[0].time * 1000);
       buildTimeline();
       estimateMotion();
     }
-    setRadarTime(R.sel || Date.now(), true);
-    playRadar(true);
+    setRadarTime(Date.now(), true); // otevře se na „teď“ a stojí; přehrát si to pustíš sám
   } catch {
     $('#radarRel').textContent = 'mapa se nenačetla – jsi online?';
   }
@@ -783,6 +798,14 @@ const dirName = () => { // odkud kam to jde (světové strany)
   return ['na sever', 'na severovýchod', 'na východ', 'na jihovýchod', 'na jih', 'na jihozápad', 'na západ', 'na severozápad'][Math.round(ang / 45) % 8];
 };
 
+function preloadNext() { // přidá na mapu další (starší) snímek, který ještě není načtený
+  if (!R.map) return;
+  for (let k = R.layers.length - 1; k >= 0; k--) {
+    const l = R.layers[k];
+    if (!R.map.hasLayer(l)) { l.addTo(R.map); return; }
+    if (!R.ready[k]) return; // počkej, až se dotáhne ten předchozí
+  }
+}
 function closeRadar() {
   const el = $('#radarSheet'); el.classList.add('closing');
   stopRadar();
@@ -809,8 +832,15 @@ function setRadarTime(t, force) {
   const lastFrame = R.frames.length ? R.frames[R.frames.length - 1].time * 1000 : now;
   const isFuture = R.sel > lastFrame + 6 * 60e3;
   // snímek radaru: nejbližší starší (v budoucnu drží poslední, ztlumený)
-  let idx = -1;
-  for (let k = 0; k < R.frames.length; k++) if (R.frames[k].time * 1000 <= R.sel + 5 * 60e3) idx = k;
+  let want = -1;
+  for (let k = 0; k < R.frames.length; k++) if (R.frames[k].time * 1000 <= R.sel + 5 * 60e3) want = k;
+  // když chtěný snímek ještě není načtený, ukaž nejbližší načtený (ať mapa nezůstane prázdná)
+  let idx = want;
+  if (want >= 0 && !R.ready?.[want]) {
+    idx = R.shown;
+    let bestD = Infinity;
+    R.frames.forEach((fr, k) => { const d = Math.abs(k - want); if (R.ready?.[k] && d < bestD) { bestD = d; idx = k; } });
+  }
   // v budoucnu: poslední snímek posunutý podle odhadnutého pohybu, postupně slábne (čím dál, tím nejistější)
   const ahead = isFuture ? R.sel - lastFrame : 0;
   R.shiftMs = R.motion ? ahead : 0;
@@ -829,10 +859,10 @@ function setRadarTime(t, force) {
     $('#radarTime').textContent = placeTime(R.sel);
     $('#radarRel').textContent = `za ${mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`}`;
     $('#nowcastNote').textContent = slot
-      ? `U tebe ${slot.p >= 0.02 ? `${intensity(slot.p)} · ${fmtMm(slot.p)} mm za 15 min` : 'sucho'}. ${R.motion && speedKmh() >= 3
-        ? `Mapa: odhad, srážky se posouvají ${dirName()} asi ${speedKmh()} km/h.`
-        : 'Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.'}`
-      : 'Předpověď po 15 minutách teď není k dispozici.';
+      ? `${slot.p >= 0.02 ? T('radar.u-tebe', { co: intensity(slot.p), mm: fmtMm(slot.p) }, 'U tebe {co} · {mm} mm za 15 min.') : T('radar.u-tebe-sucho', {}, 'U tebe sucho.')} ${R.motion && speedKmh() >= 3
+        ? T('radar.pohyb', { smer: dirName(), rychlost: speedKmh() }, 'Mapa: odhad, srážky se posouvají {smer} asi {rychlost} km/h.')
+        : T('radar.stoji', {}, 'Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.')}`
+      : T('radar.bez-dat', {}, 'Předpověď po 15 minutách teď není k dispozici.');
     const p = slot?.p || 0;
     R.marker?.getElement()?.style.setProperty('--wet', p >= 0.02 ? clamp(0.35 + p, 0, 1) : 0);
   } else {
@@ -846,9 +876,9 @@ function setRadarTime(t, force) {
 }
 function radarSummary() {
   const fut = future();
-  if (!fut.length) return 'Modře je, kde pršelo. Posuň osu doprava a uvidíš, co čeká tebe.';
+  if (!fut.length) return T('radar.bez-predpovedi', {}, 'Modře je, kde pršelo. Posuň osu doprava a uvidíš, co čeká tebe.');
   const total = fut.reduce((a, x) => a + x.p, 0);
-  return total < 0.1 ? `Další 3 hodiny u tebe nic nespadne. ${rainSentence()}` : `${rainSentence()} Do ${placeTime(fut[fut.length - 1].t)} asi ${fmtMm(total)} mm.`;
+  return total < 0.1 ? `${T('radar.sucho3h', {}, 'Další 3 hodiny u tebe nic nespadne.')} ${rainSentence()}` : `${rainSentence()} ${T('radar.celkem', { cas: placeTime(fut[fut.length - 1].t), mm: fmtMm(total) }, 'Do {cas} asi {mm} mm.')}`;
 }
 function playRadar(force) {
   if (R.play && !force) return stopRadar();
@@ -919,8 +949,8 @@ async function refresh() {
     ingest(raw, mraw);
   } catch (e) {
     const c = load().cache;
-    if (c && c.key === `${lat},${lon}`) { ingest(c.raw, c.mraw); toast('Jsi offline. Ukazuju poslední známou předpověď.'); }
-    else toast('Nepovedlo se stáhnout počasí. Zkus to za chvíli.');
+    if (c && c.key === `${lat},${lon}`) { ingest(c.raw, c.mraw); toast(T('hlaska.offline', {}, 'Jsi offline. Ukazuju poslední známou předpověď.')); }
+    else toast(T('hlaska.chyba', {}, 'Nepovedlo se stáhnout počasí. Zkus to za chvíli.'));
   }
 }
 function ingest(raw, mraw) {

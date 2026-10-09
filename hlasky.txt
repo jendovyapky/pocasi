@@ -133,3 +133,92 @@ Fajn
 Ujde to
 Mhm
 Zůstaň doma
+
+
+# ============================================================
+#  [texty] – všechno ostatní, co appka píše
+# ============================================================
+#  Tady je to jinak: každý řádek je   klíč = text
+#  Klíč (vlevo od =) neměň, přepisuj jen text vpravo.
+#  Když řádek smažeš, appka použije původní text.
+#  Proměnné ve {} jsou u každého řádku jen ty, co v něm jsou teď.
+
+[texty]
+
+# ---------- Nahoře: „Dnes je … než včera“ ----------
+srovnani.stejne = zhruba stejně
+srovnani.stejne-konec = jako včera
+srovnani.trochu = trochu {smer}
+srovnani.dost = o dost {smer}
+srovnani.konec = než včera
+srovnani.tepleji = tepleji
+srovnani.chladneji = chladněji
+srovnani.extrem-tepleji = úplně jiné léto
+srovnani.extrem-chladneji = úplně jiná zima
+srovnani.extrem-konec = (o {stupne}° {smer} než včera)
+
+# ---------- „Vem si:“ ----------
+# víc věcí v jednom řádku odděluj svislítkem |
+# čísla = průměrná pocitová teplota na zbytek dne (25+ °C, 20+, 15+, 10+, 4+, -2+, pod -2)
+obleceni.nadpis = Vem si:
+obleceni.25 = triko | kraťasy
+obleceni.20 = triko | lehké kalhoty
+obleceni.20-vecer = triko | něco přes na večer
+obleceni.15 = lehká mikina
+obleceni.10 = mikina | lehká bunda
+obleceni.4 = bunda | něco pod ni
+obleceni.-2 = zimní bunda | čepice
+obleceni.mraz = termoprádlo | zimní bunda | čepice | rukavice
+# přidává se navíc podle počasí:
+obleceni.destnik = deštník ☂
+obleceni.destnik-asi = deštník do batohu, pro jistotu
+obleceni.snih = boty, co nepromoknou
+obleceni.uv-silne = brýle + krém
+obleceni.uv = sluneční brýle
+obleceni.vitr = nic, co uletí
+
+# ---------- Karta Pohoda ----------
+pohoda.nic = nic to nekazí
+pohoda.kazi = kazí to {co}
+pohoda.co.zima = zima
+pohoda.co.chladek = chládek
+pohoda.co.teplo = teplo
+pohoda.co.vedro = vedro
+pohoda.co.dest = déšť
+pohoda.co.vitr = vítr
+pohoda.co.mraky = mraky
+pohoda.co.tma = tma
+pohoda.nejlip-ted = nejlíp je teď
+pohoda.nejlip = nejlíp {cas}
+slovo.zitra = zítra
+
+# ---------- Karta Déšť a věta pod kartami ----------
+dest.karta-mm = naprší ~{mm} mm/h
+dest.karta-sucho = nic nenaprší
+dest.prsi-prestane = Prší. Podle modelu přestane kolem {cas}.
+dest.prsi-neprestane = Prší a jen tak nepřestane.
+dest.zacne = Pozor, kolem {cas} začne pršet.
+dest.prsi-konec = Prší. Konec v plánu kolem {cas}.
+dest.prsi-celyden = Prší a celý den to vypadá stejně.
+dest.sucho24 = Dalších 24 hodin sucho. Deštník může zůstat doma.
+dest.sucho-do = Do {cas} sucho, pak to začne kapat.
+
+# ---------- Radar ----------
+radar.u-tebe = U tebe {co} · {mm} mm za 15 min.
+radar.u-tebe-sucho = U tebe sucho.
+radar.pohyb = Mapa: odhad, srážky se posouvají {smer} asi {rychlost} km/h.
+radar.stoji = Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.
+radar.bez-dat = Předpověď po 15 minutách teď není k dispozici.
+radar.bez-predpovedi = Modře je, kde pršelo. Posuň osu doprava a uvidíš, co čeká tebe.
+radar.sucho3h = Další 3 hodiny u tebe nic nespadne.
+radar.celkem = Do {cas} asi {mm} mm.
+radar.sucho = sucho
+radar.slaby = slabý déšť
+radar.dest = déšť
+radar.silny = silný déšť
+radar.lijak = liják
+
+# ---------- Vyskakovací hlášky ----------
+hlaska.poloha-zakazana = Polohu jsi nepovolil. Tak aspoň Praha.
+hlaska.offline = Jsi offline. Ukazuju poslední známou předpověď.
+hlaska.chyba = Nepovedlo se stáhnout počasí. Zkus to za chvíli.

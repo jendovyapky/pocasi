@@ -182,7 +182,7 @@ body.ready .reveal {
 
 /* ---------- Slunce ---------- */
 .sun { margin-top: 22px; }
-.sun__svg { width: 100%; height: auto; display: block; overflow: visible; }
+.sun__svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; cursor: ew-resize; }
 .sun__horizon { stroke: var(--ink-3); stroke-width: 1; }
 .sun__arc { stroke: var(--ink); stroke-width: 2; }
 .sun__tail { stroke: var(--ink-2); stroke-width: 2.4; stroke-dasharray: .1 7; }
@@ -396,6 +396,8 @@ body.scrubbing .dial__chip { transform: translateX(-50%) scale(1.08); }
 .tl__cursor::after { content: ''; position: absolute; left: 6px; top: 9px; bottom: 9px; width: 2px; border-radius: 2px; background: #16181d; opacity: .35; }
 .tl__labels { position: absolute; left: 0; right: 0; bottom: 0; height: 14px; font: 10px var(--mono); color: rgba(244,241,234,.55); }
 .tl__labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.radar__attr { margin: 4px 0 0; font: 9px var(--mono); color: rgba(244,241,234,.4); }
+.radar__attr a { color: inherit; }
 .radar__note { margin: 8px 0 0; font: 12px/1.5 var(--mono); color: rgba(244,241,234,.75); min-height: 3em; }
 .radar .leaflet-layer, .radar .rv { transition: opacity .35s linear; }
 .radar .leaflet-control-attribution { background: rgba(22,24,29,.6); color: rgba(244,241,234,.55); font-size: 9px; }
