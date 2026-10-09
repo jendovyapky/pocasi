@@ -123,7 +123,7 @@ function applySky(f) {
   let p = palAt(ms);
   const cloud = at(H.cloud, f) / 100;
   const rain = at(H.precip, f);
-  const code = H.code[Math.round(clamp(f, 0, H.code.length - 1))];
+  const code = codeAt(f);
   const night = lum(p[1]) < 0.3;
   const grey = night ? '#2a2d3d' : '#a7adb8';
   p = p.map((c) => mix(c, grey, cloud * 0.55));
@@ -166,15 +166,25 @@ async function fetchMinutely(lat, lon) {
   if (!r.ok) throw new Error('minutely');
   return r.json();
 }
+// Model občas dá kód „slabý déšť“, i když mu vychází 0 mm → pak je to jen zataženo.
+// Déšť ukazujeme jen když opravdu něco padá (ať Mraq netvrdí, že prší, když neprší).
+function dryCode(code, mm, prob = 0) {
+  const wet = (code >= 51 && code <= 67) || (code >= 80 && code <= 82);
+  const snow = (code >= 71 && code <= 77) || code === 85 || code === 86;
+  if ((wet || snow) && mm < 0.1) return 3;
+  if (code >= 95 && mm < 0.1 && prob < 30) return 3;
+  return code;
+}
 function process(raw) {
   const h = raw.hourly, d = raw.daily;
+  const precip = h.precipitation.map((v) => v ?? 0), prob = h.precipitation_probability.map((v) => v ?? 0);
   return {
     offset: raw.utc_offset_seconds * 1000,
     current: raw.current,
     hourly: {
       t: h.time.map(parseLocal), temp: h.temperature_2m, feels: h.apparent_temperature,
-      prob: h.precipitation_probability.map((v) => v ?? 0), precip: h.precipitation.map((v) => v ?? 0),
-      code: h.weather_code, cloud: h.cloud_cover, wind: h.wind_speed_10m, gust: h.wind_gusts_10m,
+      prob, precip,
+      code: h.weather_code.map((c, i) => dryCode(c, Math.max(precip[i], precip[i + 1] ?? 0), prob[i])), cloud: h.cloud_cover, wind: h.wind_speed_10m, gust: h.wind_gusts_10m,
       uv: h.uv_index.map((v) => v ?? 0), isDay: h.is_day, hum: h.relative_humidity_2m,
     },
     daily: {
@@ -185,6 +195,12 @@ function process(raw) {
   };
 }
 const nowLocal = () => Date.now() + state.data.offset;
+// kód počasí pro čas f: pro „teď“ bereme aktuální stav (už očištěný o falešný déšť)
+function codeAt(f) {
+  const H = state.data.hourly, c = state.data.current;
+  if (c && Math.abs(f - (state.nowF ?? -99)) < 0.5) return c.weather_code;
+  return H.code[Math.round(clamp(f, 0, H.code.length - 1))];
+}
 
 /* ---------------- Místo ---------------- */
 async function reverseName(lat, lon) {
@@ -386,7 +402,7 @@ function mascotMood(f) {
   const H = state.data.hourly;
   const i = Math.round(clamp(f, 0, H.t.length - 1));
   const ms = at(H.t, f);
-  const k = kind(H.code[i]), code = H.code[i];
+  const code = codeAt(f), k = kind(code);
   const feels = at(H.feels, f), wind = at(H.wind, f), gust = at(H.gust, f) || 0, rain = at(H.precip, f), cloud = at(H.cloud, f);
   const { t, rise, set } = sunPhase(ms);
   if (k === 'storm') return 'strach';
@@ -424,7 +440,7 @@ function mascotCtx(f) {
 function weatherFx(f) { // animace kolem Mraqa podle počasí
   const H = state.data.hourly;
   const i = Math.round(clamp(f, 0, H.t.length - 1));
-  const code = H.code[i], k = kind(code), rain = at(H.precip, f);
+  const code = codeAt(f), k = kind(code), rain = at(H.precip, f);
   const { t } = sunPhase(at(H.t, f));
   const night = t < 0 || t > 1;
   const fx = [];
@@ -1110,6 +1126,11 @@ function ingest(raw, mraw) {
   state.lastFetch = Date.now();
   const H = state.data.hourly;
   state.nowF = (nowLocal() - H.t[0]) / HOUR;
+  if (state.data.current) { // je teď opravdu mokro? (aktuální srážky nebo nejbližších 15 min)
+    const c = state.data.current, i = Math.floor(state.nowF);
+    const nowMm = Math.max(c.precipitation ?? 0, (state.minutely?.[0]?.p ?? 0) * 4, H.precip[i + 1] ?? 0);
+    c.weather_code = dryCode(c.weather_code, nowMm, H.prob[i] ?? 0);
+  }
   state.i0 = Math.floor(state.nowF);
   state.span = Math.min(36, H.t.length - 1 - state.i0);
   renderStatic();
