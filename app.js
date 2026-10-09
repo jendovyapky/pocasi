@@ -716,7 +716,25 @@ const placeTime = (epoch) => hhmm(epoch + state.data.offset);
 const future = () => (state.minutely || []).map((x) => ({ t: x.t - state.data.offset, p: x.p }));
 const intensity = (mm15) => { const h = mm15 * 4; return h < 0.1 ? T('radar.sucho', {}, 'sucho') : h < 1 ? T('radar.slaby', {}, 'slabý déšť') : h < 4 ? T('radar.dest', {}, 'déšť') : h < 10 ? T('radar.silny', {}, 'silný déšť') : T('radar.lijak', {}, 'liják'); };
 
+/* Načítání radaru: Mraq se plní zespodu (poslední snímek radaru + předpověď modelu) */
+const RL = { json: false, frame: false, model: false, shown: false, timer: 0 };
+function radarLoadStart() {
+  const fresh = R.frames.length && Date.now() - R.loadedAt < 4 * 60e3 && R.model.length && Date.now() - R.modelAt < 10 * 60e3;
+  Object.assign(RL, { json: false, frame: false, model: false, shown: !fresh });
+  $('#radarLoad').classList.toggle('on', !fresh);
+  clearTimeout(RL.timer); RL.timer = setTimeout(radarLoadDone, 9000); // ať to nevisí věčně
+  radarLoadTick();
+}
+function radarLoadTick() {
+  if (!RL.shown) return;
+  const p = (RL.json ? .2 : .05) + (RL.frame ? .45 : 0) + (RL.model ? .35 : 0);
+  $('#rlFill').setAttribute('y', 422 - 304 * p); $('#rlFill').setAttribute('height', 304 * p);
+  $('#rlPct').textContent = `${Math.round(p * 100)} %`;
+  if (RL.json && RL.frame && RL.model) setTimeout(radarLoadDone, 250);
+}
+function radarLoadDone() { RL.shown = false; clearTimeout(RL.timer); $('#radarLoad').classList.remove('on'); }
 async function openRadar() {
+  radarLoadStart();
   const el = $('#radarSheet');
   el.hidden = false; el.classList.remove('closing');
   document.body.classList.add('radar-open');
@@ -744,11 +762,12 @@ async function openRadar() {
     R.marker.setLatLng([state.place.lat, state.place.lon]);
     setTimeout(() => R.map.invalidateSize(), 60);
 
+    if (R.frames.length && Date.now() - R.loadedAt <= 4 * 60e3) { RL.json = true; RL.frame = !!R.ready?.[R.frames.length - 1]; radarLoadTick(); }
     if (Date.now() - R.loadedAt > 4 * 60e3 || !R.frames.length) {
       const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
       R.layers.forEach((l) => R.map.removeLayer(l));
       // nowcast RainViewer od 2026 nedává, ale kdyby se vrátil, použije se
-      R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])];
+      R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])]; RL.json = true; radarLoadTick();
       R.loadedAt = Date.now(); R.shown = -1; R.ready = [];
       // poslední snímek se v budoucnu posouvá → načíst dlaždice i kus mimo obrazovku, ať nezůstane ostrý okraj
       const Padded = L.TileLayer.extend({ _getTiledPixelBounds(c) {
@@ -758,7 +777,7 @@ async function openRadar() {
       // nejdřív jen nejnovější snímek (rychle něco vidět), starší se dotahují postupně na pozadí
       R.layers = R.frames.map((fr, k) => new (k === R.frames.length - 1 ? Padded : L.TileLayer)(`${R.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0, maxNativeZoom: 7, maxZoom: 10, tileSize: 256, zIndex: 5, className: 'rv',
-      }).on('load', () => { R.ready[k] = true; setRadarTime(R.sel); preloadNext(); }));
+      }).on('load', () => { R.ready[k] = true; if (k === R.frames.length - 1) { RL.frame = true; radarLoadTick(); } setRadarTime(R.sel); preloadNext(); }));
       if (R.layers.length) R.layers[R.layers.length - 1].addTo(R.map);
       if (R.frames.length) R.t0 = Math.min(R.t0, R.frames[0].time * 1000);
       buildTimeline();
@@ -871,7 +890,7 @@ function rainColor(mmh) {
 async function loadModelGrid() {
   const L = window.L; if (!L || !R.map) return;
   const key = `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}`;
-  if (R.model.length && R.modelKey === key && Date.now() - R.modelAt < 10 * 60e3) return;
+  if (R.model.length && R.modelKey === key && Date.now() - R.modelAt < 10 * 60e3) { RL.model = true; radarLoadTick(); return; }
   const NX = 11, NY = 13, dLon = 0.5, dLat = 0.42;
   const lats = [], lons = [];
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
@@ -882,7 +901,7 @@ async function loadModelGrid() {
     const q = `latitude=${lats.join(',')}&longitude=${lons.join(',')}&minutely_15=precipitation&forecast_minutely_15=14&past_minutely_15=1&timezone=GMT`;
     const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?${q}`)).json();
     const arr = Array.isArray(j) ? j : [j];
-    if (arr.length !== NX * NY || !arr[0].minutely_15) return;
+    if (arr.length !== NX * NY || !arr[0].minutely_15) { RL.model = true; radarLoadTick(); return; }
     const times = arr[0].minutely_15.time.map((s) => parseLocal(s)); // GMT → přímo epocha
     const small = document.createElement('canvas'); small.width = NX; small.height = NY;
     const sg = small.getContext('2d');
@@ -903,9 +922,9 @@ async function loadModelGrid() {
       const layer = L.imageOverlay(big.toDataURL('image/png'), [[south, west], [north, east]], { opacity: 0, className: 'rv-model', interactive: false }).addTo(R.map);
       return { t, layer };
     });
-    R.modelAt = Date.now(); R.modelKey = key;
+    R.modelAt = Date.now(); R.modelKey = key; RL.model = true; radarLoadTick();
     setRadarTime(R.sel, true);
-  } catch {}
+  } catch { RL.model = true; radarLoadTick(); }
 }
 
 function closeRadar() {

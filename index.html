@@ -181,6 +181,14 @@
   <!-- Radar (celá obrazovka, ve stylu RainVieweru) -->
   <div class="radar" id="radarSheet" hidden>
     <div class="radar__map" id="map"></div>
+    <div class="radar__load" id="radarLoad" aria-live="polite">
+      <svg viewBox="70 118 384 304" aria-hidden="true">
+        <defs><clipPath id="rlClip"><rect id="rlFill" x="60" y="422" width="400" height="0"/></clipPath></defs>
+        <g class="rl-bg"><path d="M168 366 C 116 366 86 330 92 292 C 97 258 124 238 152 238 C 150 184 196 140 252 140 C 304 140 340 172 350 214 C 392 214 426 248 424 292 C 422 336 388 366 344 366 Z"/><path class="t" d="M322 338 C 344 380 372 404 408 402 C 418 401 426 396 430 388"/></g>
+        <g class="rl-fg" clip-path="url(#rlClip)"><path d="M168 366 C 116 366 86 330 92 292 C 97 258 124 238 152 238 C 150 184 196 140 252 140 C 304 140 340 172 350 214 C 392 214 426 248 424 292 C 422 336 388 366 344 366 Z"/><path class="t" d="M322 338 C 344 380 372 404 408 402 C 418 401 426 396 430 388"/></g>
+      </svg>
+      <p>Mraq stahuje radar <b id="rlPct">0 %</b></p>
+    </div>
     <div class="radar__top">
       <button class="rbtn" id="radarClose" aria-label="Zavřít"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
       <div class="radar__title"><b>Radar srážek</b><span id="radarPlace">&nbsp;</span></div>
