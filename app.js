@@ -640,7 +640,7 @@ function stopPlay() {
 /* ---------------- Radar (RainViewer: jen minulé 2 h) + předpověď pro moje místo ----------------
    Časová osa: −2 h … teď = skutečný radar na mapě, teď … +3 h = model ICON-D2 po 15 min,
    ale jen pro vybrané místo (RainViewer od 2026 nowcast nedává). */
-const R = { map: null, marker: null, layers: [], frames: [], host: '', sel: 0, t0: 0, t1: 0, play: 0, shown: -1, loadedAt: 0 };
+const R = { map: null, marker: null, layers: [], frames: [], host: '', sel: 0, t0: 0, t1: 0, play: 0, shown: -1, loadedAt: 0, motion: null, shiftMs: 0 };
 let leafletReady;
 function loadLeaflet() {
   if (leafletReady) return leafletReady;
@@ -679,6 +679,7 @@ async function openRadar() {
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 10, pane: 'labels', opacity: 0.85,
       }).addTo(R.map);
+      R.map.on('zoom zoomend', applyShift);
       R.marker = L.marker([0, 0], { icon: L.divIcon({ className: 'me', html: '<i></i><b></b>', iconSize: [22, 22] }), interactive: false, zIndexOffset: 1000 }).addTo(R.map);
     }
     R.map.setView([state.place.lat, state.place.lon], 7, { animate: false });
@@ -694,6 +695,7 @@ async function openRadar() {
       }).addTo(R.map));
       if (R.frames.length) R.t0 = Math.min(R.t0, R.frames[0].time * 1000);
       buildTimeline();
+      estimateMotion();
     }
     setRadarTime(R.sel || Date.now(), true);
     playRadar(true);
@@ -701,6 +703,81 @@ async function openRadar() {
     $('#radarRel').textContent = 'mapa se nenačetla – jsi online?';
   }
 }
+
+/* Vlastní „nowcast“: z posledních radarových snímků odhadne, kam a jak rychle se srážky posouvají
+   (porovnání dvou snímků po 30 min, hledá posun s nejmenším rozdílem), a v budoucnu posouvá poslední snímek. */
+const MZ = 6, CELL = 4; // zoom pro odhad, velikost buňky v px
+function tileXY(lat, lon, z) {
+  const n = 2 ** z, x = (lon + 180) / 360 * n;
+  const r = lat * Math.PI / 180, y = (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n;
+  return [x, y];
+}
+function loadImg(src) {
+  return new Promise((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+}
+async function radarGrid(fr, tx, ty) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 768;
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  const imgs = await Promise.all([-1, 0, 1].flatMap((dy) => [-1, 0, 1].map((dx) => loadImg(`${R.host}${fr.path}/256/${MZ}/${tx + dx}/${ty + dy}/2/1_1.png`).then((im) => [im, dx, dy]))));
+  if (imgs.every(([im]) => !im)) return null;
+  for (const [im, dx, dy] of imgs) if (im) g.drawImage(im, (dx + 1) * 256, (dy + 1) * 256);
+  const d = g.getImageData(0, 0, 768, 768).data, N = 768 / CELL, out = new Float32Array(N * N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let s = 0;
+    for (let yy = 0; yy < CELL; yy++) for (let xx = 0; xx < CELL; xx++) s += d[((y * CELL + yy) * 768 + x * CELL + xx) * 4 + 3];
+    out[y * N + x] = s / (CELL * CELL * 255);
+  }
+  return out;
+}
+async function estimateMotion() {
+  R.motion = null;
+  if (R.frames.length < 4) return;
+  const a = R.frames[R.frames.length - 4], b = R.frames[R.frames.length - 1];
+  const [fx, fy] = tileXY(state.place.lat, state.place.lon, MZ);
+  const tx = Math.floor(fx), ty = Math.floor(fy);
+  try {
+    const [A, B] = await Promise.all([radarGrid(a, tx, ty), radarGrid(b, tx, ty)]);
+    if (!A || !B) return;
+    const N = 768 / CELL, M = 14; let best = null, base = 0, wet = 0;
+    for (let i = 0; i < N * N; i++) if (A[i] > 0.05 || B[i] > 0.05) wet++;
+    if (wet < 40) return; // skoro nic neprší → není co posouvat
+    for (let sy = -M; sy <= M; sy++) for (let sx = -M; sx <= M; sx++) {
+      let err = 0, n = 0;
+      for (let y = M; y < N - M; y += 2) for (let x = M; x < N - M; x += 2) {
+        const va = A[y * N + x], vb = B[(y + sy) * N + (x + sx)];
+        if (va < 0.05 && vb < 0.05) continue;
+        err += Math.abs(va - vb); n++;
+      }
+      if (n < 20) continue;
+      const e = err / n + 0.002 * Math.hypot(sx, sy); // mírně preferuj menší posun
+      if (sx === 0 && sy === 0) base = e;
+      if (!best || e < best.e) best = { e, sx, sy };
+    }
+    if (!best) return;
+    const dtMin = (b.time - a.time) / 60;
+    // px na minutu v zoomu MZ
+    R.motion = { vx: best.sx * CELL / dtMin, vy: best.sy * CELL / dtMin, conf: base ? clamp(1 - best.e / base, 0, 1) : 0 };
+    setRadarTime(R.sel, true);
+  } catch {}
+}
+function applyShift() {
+  const last = R.layers[R.layers.length - 1];
+  const el = last?.getContainer?.(); if (!el) return;
+  if (!R.motion || !R.shiftMs || !R.map) { el.style.transform = ''; return; }
+  const k = 2 ** (R.map.getZoom() - MZ), m = R.shiftMs / 60e3;
+  el.style.transform = `translate(${(R.motion.vx * m * k).toFixed(1)}px, ${(R.motion.vy * m * k).toFixed(1)}px)`;
+}
+const speedKmh = () => { // přibližná rychlost v km/h
+  if (!R.motion) return 0;
+  const mPerPx = 156543 * Math.cos(state.place.lat * Math.PI / 180) / 2 ** MZ;
+  return Math.round(Math.hypot(R.motion.vx, R.motion.vy) * mPerPx * 60 / 1000);
+};
+const dirName = () => { // odkud kam to jde (světové strany)
+  if (!R.motion) return '';
+  const ang = (Math.atan2(R.motion.vx, -R.motion.vy) * 180 / Math.PI + 360) % 360;
+  return ['na sever', 'na severovýchod', 'na východ', 'na jihovýchod', 'na jih', 'na jihozápad', 'na západ', 'na severozápad'][Math.round(ang / 45) % 8];
+};
+
 function closeRadar() {
   const el = $('#radarSheet'); el.classList.add('closing');
   stopRadar();
@@ -729,10 +806,15 @@ function setRadarTime(t, force) {
   // snímek radaru: nejbližší starší (v budoucnu drží poslední, ztlumený)
   let idx = -1;
   for (let k = 0; k < R.frames.length; k++) if (R.frames[k].time * 1000 <= R.sel + 5 * 60e3) idx = k;
+  // v budoucnu: poslední snímek posunutý podle odhadnutého pohybu, postupně slábne (čím dál, tím nejistější)
+  const ahead = isFuture ? R.sel - lastFrame : 0;
+  R.shiftMs = R.motion ? ahead : 0;
+  const futOp = R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
   if (idx !== R.shown || force) {
-    R.layers.forEach((l, k) => l.setOpacity(k === idx ? (isFuture ? 0.35 : 0.8) : 0));
+    R.layers.forEach((l, k) => l.setOpacity(k === idx ? (isFuture ? futOp : 0.8) : 0));
     R.shown = idx;
-  } else if (idx >= 0) R.layers[idx]?.setOpacity(isFuture ? 0.35 : 0.8);
+  } else if (idx >= 0) R.layers[idx]?.setOpacity(isFuture ? futOp : 0.8);
+  applyShift();
   $('#radarSheet').classList.toggle('future', isFuture);
   $('#radarBadge').textContent = isFuture || R.sel > now + 5 * 60e3 ? 'předpověď' : 'radar';
   const mins = Math.round((R.sel - now) / 60e3);
@@ -742,7 +824,9 @@ function setRadarTime(t, force) {
     $('#radarTime').textContent = placeTime(R.sel);
     $('#radarRel').textContent = `za ${mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`}`;
     $('#nowcastNote').textContent = slot
-      ? `U tebe ${slot.p >= 0.02 ? `${intensity(slot.p)} · ${fmtMm(slot.p)} mm za 15 min` : 'sucho'}. Mapa ukazuje poslední radar, budoucnost jen pro tvoje místo.`
+      ? `U tebe ${slot.p >= 0.02 ? `${intensity(slot.p)} · ${fmtMm(slot.p)} mm za 15 min` : 'sucho'}. ${R.motion && speedKmh() >= 3
+        ? `Mapa: odhad, srážky se posouvají ${dirName()} asi ${speedKmh()} km/h.`
+        : 'Mapa: srážky se teď skoro nehýbou, ukazuje poslední radar.'}`
       : 'Předpověď po 15 minutách teď není k dispozici.';
     const p = slot?.p || 0;
     R.marker?.getElement()?.style.setProperty('--wet', p >= 0.02 ? clamp(0.35 + p, 0, 1) : 0);
