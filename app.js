@@ -311,13 +311,15 @@ function toggleWear(btn) {
    Deštník/sníh má přednost, zbytek skupin (oblečení, UV, vítr) se střídá. */
 let wearSeed = 0;
 function wearPick(s) {
+  // položka = „jednotka“; „bundu + něco pod ni“ = dvě věci, co musí být spolu (zaberou obě místa)
   const g = wearList(s, true), seed = wearSeed;
   const rot = (a, n) => a.map((_, i) => a[(i + n) % a.length]);
   const key = g.filter((x) => x.key).map((x) => x.items.slice(0, 1)); // deštník je deštník, žádný vtipy navíc
   const rest = rot(g.filter((x) => !x.key), seed).map((x) => rot(x.items, seed));
   const all = [...key, ...rest], out = [];
-  for (const a of all) if (out.length < 2 && a[0]) out.push(a[0]);
-  for (const a of all) for (const x of a.slice(1)) if (out.length < 2) out.push(x);
+  const take = (u) => { const p = u.split('+').map((x) => x.trim()).filter(Boolean); if (p.length && out.length + p.length <= 2 && !p.some((x) => out.includes(x))) out.push(...p); };
+  for (const a of all) if (a[0]) take(a[0]);           // z každé skupiny nejdřív to hlavní
+  for (const a of all) for (const u of a.slice(1)) take(u); // pak doplnit
   return out;
 }
 function wearList(s, grouped) {

@@ -202,7 +202,7 @@ function extremeMsg(w, texts) {
 
 function wearList(s, texts) {
   const f = (s.maxFeels + s.minFeels) / 2, w = [];
-  const add = (k, d) => w.push(...T(texts, 'obleceni.' + k, {}, d).split('|').map((x) => x.trim()).filter(Boolean));
+  const add = (k, d) => w.push(...T(texts, 'obleceni.' + k, {}, d).split(/[|+]/).map((x) => x.trim()).filter(Boolean));
   if (f >= 25) add('25', 'triko | kraťasy');
   else if (f >= 20) add(s.minFeels < 15 ? '20-vecer' : '20', 'triko | lehké kalhoty');
   else if (f >= 15) add('15', 'lehká mikina');
