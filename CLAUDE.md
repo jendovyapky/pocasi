@@ -21,7 +21,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - `index.html` – struktura stránky (hlavička, líný text, teplota, slunce, karty, části dne, radar, týden, dock s časovou osou, sheety pro hledání místa a radar)
 - `style.css` – vzhled; barvy oblohy přes CSS proměnné `--c1 --c2 --c3 --glow` (registrované přes `@property`, plynule se animují)
 - `app.js` – veškerá logika, bez frameworku a bez buildu
-- `mraq.js` – maskot Mraq: obličej kreslený do SVG z parametrů (oči = elipsa oříznutá víčky, pusa = křivka), nálady `MOODS`, mrkání, reakce na ťuknutí, psaní vět
+- `mraq.js` – maskot Mraq: tělo = rozmazaný mrak s ocáskem Q (stejný tvar jako ikonka), obličej = robotí tečkové oči (styl Cozmo / RoboEyes, tečky jako písmo Doto), bez pusy. `pixelEye()` počítá každý snímek, které tečky svítí (zaoblený obdélník oříznutý víčky, `happy` = oblouček ∩). Nálady `MOODS`, mrkání, reakce na ťuknutí, psaní vět. Náhled všech výrazů: `window.__mraq.set(nálada)`
 - `hlasky.txt` – **všechny hlášky Mraqa** po skupinách `[nálada]`, proměnné `{teplota}` apod. Appka si soubor načítá za běhu → Honza je může přepisovat sám
 - `icons/mraq.svg` – zdroj ikonky (mrak jako Q, oči koukají stranou, zrnitý gradient appky); PNG se z něj renderují Playwrightem
 - `sw.js` – service worker (vlastní soubory network-first s `cache: 'no-cache'`, fonty/Leaflet cache-first, API se necachuje)

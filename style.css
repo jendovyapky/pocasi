@@ -142,10 +142,10 @@ body.ready .reveal {
 .orb__ball .s2 { stop-color: var(--orb); }
 .orb__ball .s3 { stop-color: color-mix(in srgb, var(--orb) 82%, #000); }
 .orb__face { position: absolute; left: 21px; top: 6px; width: 104px; height: 104px; overflow: visible; }
-.orb__eye, .orb__mouthO { fill: #141414; stroke: none; }
+.orb__eye { fill: #141414; stroke: none; }
 .orb__lash { stroke: #141414; stroke-width: 3.4; fill: none; }
 .orb__mouth { stroke: #141414; stroke-width: 3.6; fill: none; }
-.orb__spark { fill: #fff; stroke: none; transition: opacity .3s; }
+.orb__spark { fill: #fff; stroke: none; }
 .orb__blush { fill: #ff7aa8; stroke: none; opacity: 0; filter: blur(2px); }
 .orb__mouthO { transition: opacity .12s; }
 .orb:active .orb__face { transform: scale(.94); }
