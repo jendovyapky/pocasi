@@ -26,6 +26,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - `icons/mraq.svg` – zdroj ikonky (mrak jako Q, oči koukají stranou, zrnitý gradient appky); PNG se z něj renderují Playwrightem
 - `sw.js` – service worker (vlastní soubory network-first s `cache: 'no-cache'`, fonty/Leaflet cache-first, API se necachuje)
 - `manifest.webmanifest`, `icons/` – PWA
+- `push/` – **server pro notifikace** (Cloudflare Worker `mraq-push`, nasazuje se sám z GitHubu přes Workers Builds, root `/push`). API na https://mraq-api.jendovyapky.eu (`/vapid`, `/subscribe`, `/unsubscribe`, `/test`). Cron každých 15 min: ranní shrnutí v nastavený čas, déšť do hodiny (7–22 h, max 1× za 3 h), extrémy na zítřek v 19:00. Web Push je ručně přes WebCrypto (VAPID + aes128gcm). VAPID klíče si Worker vygeneroval sám a má je v KV `mraq-push` (klíč `vapid`) – **nemazat**, jinak přestanou fungovat všechny přihlášené telefony. Texty bere z `hlasky.txt` z webu.
 
 ## Data (vše zdarma, bez klíčů)
 - Předpověď: Open-Meteo `api.open-meteo.com/v1/forecast`, `best_match` (pro ČR ICON-D2 2 km + ICON-EU + ECMWF), `past_days=1` kvůli srovnání se včerejškem.
@@ -45,6 +46,8 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - Sluníčko jde táhnout prstem jako kolečko: vodorovný posun = čas, celá šířka grafu = jeden den, za pravým koncem plynule navazuje další den (`wireSunDrag`, `sunXToMs`/`sunMsToX`).
 - Poloha: při každém otevření se zjišťuje znovu, ale o povolení se appka ptá jen jednou (`autoLocate()` + `navigator.permissions`, příznak `geoAsked`); jinak bere poslední místo. Ručně vybrané město platí jen do zavření.
 - Radar: celá obrazovka, tmavá Esri mapa, osa −2 h … +3 h. Minulost = RainViewer snímky. Budoucnost = vlastní odhad: `estimateMotion()` porovná poslední snímek se snímkem o 30 min starším (dlaždice zoom 6 do canvasu, hledá posun s nejmenším rozdílem) a poslední snímek posouvá CSS transformem, postupně slábne; čísla pro místo z `minutely_15` (RainViewer nowcast od 2026 nedává; kdyby se vrátil v `radar.nowcast`, kód ho použije).
+- Nastavení (tlačítko dole): notifikace, místo (podle polohy / pořád stejné), Mraq zap/vyp, vibrace, úsporné animace. Uloženo v `localStorage` pod `settings`.
+- Mraq má kolem sebe animace počasí (`weatherFx()` → `data-fx` na `#orb`: sun, moon, rain, drizzle, storm, snow, fog, wind) a mluví v tmavé myšlenkové bublině.
 - Poslední data se drží v `localStorage` (`lino:v1`) → appka funguje i offline.
 
 ## Design – inspirace od Honzy

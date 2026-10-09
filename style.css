@@ -118,14 +118,17 @@ body.ready .reveal {
   background: linear-gradient(transparent 62%, color-mix(in srgb, var(--glow) 70%, transparent) 62%, color-mix(in srgb, var(--glow) 70%, transparent) 92%, transparent 92%); }
 .lazy__big .w { display: inline-block; opacity: 0; transform: translateY(6px); filter: blur(4px); animation: word .7s var(--ease) forwards; animation-delay: calc(var(--d) * 90ms + 350ms); }
 @keyframes word { to { opacity: 1; transform: none; filter: none; } }
-.wear { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.wear { display: flex; flex-wrap: nowrap; gap: 6px; margin: 10px -18px 0; padding: 2px 18px; overflow-x: auto; scrollbar-width: none; align-items: center;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 28px), transparent); mask: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 28px), transparent); }
+.wear::-webkit-scrollbar { display: none; }
+.wear span { flex: none; white-space: nowrap; }
 .wear span {
-  font: 500 13px var(--font); letter-spacing: -.005em; padding: 5px 11px; border-radius: 99px;
+  font: 500 12.5px var(--font); letter-spacing: -.005em; padding: 5px 10px; border-radius: 99px;
   background: var(--glass); border: 1px solid var(--glass-line);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   opacity: 0; transform: scale(.9); animation: pop .5s var(--ease) forwards; animation-delay: calc(var(--d) * 60ms + 700ms);
 }
-.wear span:first-child { background: none; border-color: transparent; padding-left: 0; color: var(--ink-2); backdrop-filter: none; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .1em; align-self: center; }
+.wear span:first-child { background: none; border-color: transparent; padding-left: 0; padding-right: 2px; color: var(--ink); backdrop-filter: none; font: 700 14px var(--font); letter-spacing: -.01em; }
 @keyframes pop { to { opacity: 1; transform: none; } }
 
 /* ---------- Mraq (maskot) ---------- */
