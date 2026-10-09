@@ -575,6 +575,9 @@ body.radar-open { overflow: hidden; }
   animation: up .4s var(--ease); max-width: calc(100% - 32px);
 }
 
+/* „Omezit pohyb“ v telefonu: pohyb nezabíjíme úplně (smyčky by se pak sekaly), jen ho zjemníme.
+   Úplné vypnutí je v Nastavení → Úsporné animace. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .sky__blob, .sky__clouds i { animation-duration: 120s !important; }
+  .orb.hop, .orb.shake, .orb.shiver, .orb.tilt { animation: none !important; }
 }
