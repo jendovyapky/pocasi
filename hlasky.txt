@@ -165,8 +165,8 @@ obleceni.25 = plavky | litr vody
 obleceni.20 = tvůj nejlepší letní fit
 obleceni.20-vecer = dobrej outfit | mikinu na večer
 obleceni.15 = oblíbenou mikinu
-obleceni.10 = kapesníky | mikina | bunda | něco mezi
-obleceni.4 = bunda | něco pod ní
+obleceni.10 = kapesníky | mikinu | bundu | něco mezi
+obleceni.4 = bundu | něco pod ni
 obleceni.-2 = topení | dvě bundy
 obleceni.mraz = termoprádlo | horkej čaj
 # přidává se navíc podle počasí:
