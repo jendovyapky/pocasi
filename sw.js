@@ -1,5 +1,5 @@
 // Service worker: aplikace se načte i offline, data jdou vždy nejdřív ze sítě.
-const VERSION = 'lino-v2';
+const VERSION = 'lino-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -22,7 +22,7 @@ self.addEventListener('fetch', (e) => {
   }
   // Vlastní soubory: síť napřed (ať se hned projeví úpravy), offline z cache
   if (url.origin === location.origin) {
-    e.respondWith(fetch(e.request).then((res) => {
+    e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((res) => {
       const copy = res.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); return res;
     }).catch(() => caches.match(e.request).then((r) => r || caches.match('index.html'))));
   }
