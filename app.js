@@ -1358,13 +1358,16 @@ function startIntro() {
   const h = new Date().getHours(), night = h < 7 || h >= 19;
   const sp = state.skyPal || (night ? { sky: ['#1c2137', '#272d47', '#191d40'], glow: '#c9ccff', sx: .74, sy: .14, dark: true }
     : { sky: ['#91b8e3', '#a9cce2', '#badbd2'], glow: '#fff6d6', sx: .8, sy: .12, dark: false });
-  intro.start(sp); intro = null;
+  const it = intro; intro = null;
+  // intro až se styly (na pomalé síti zatím drží černou), ať po něm nevyskočí neostylovaná appka
+  Promise.race([window.__css, new Promise((r) => setTimeout(r, 4000))]).then(() => it.start(sp));
 }
 async function boot() {
   {
     const s0 = settings();
     if (!s0.lite && s0.mraq !== false) try { intro = createIntro('#000000'); } catch {}
-    if (!intro) document.documentElement.classList.add('noboot');
+    // bez intra: kryt pryč, až budou styly (ať neprobleskne neostylovaná stránka)
+    if (!intro) Promise.race([window.__css, new Promise((r) => setTimeout(r, 4000))]).then(() => document.documentElement.classList.add('noboot'));
     // černý start řeší color-scheme: dark; appka sama pak běží se světlými výchozími prvky jako dřív
     document.querySelector('meta[name=color-scheme]')?.setAttribute('content', 'light'); document.documentElement.style.colorScheme = 'light';
   }

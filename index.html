@@ -5,7 +5,7 @@
   <!-- start bez problikávání: až do úvodní animace jen černá (jako iOS při spuštění) -->
   <meta name="color-scheme" content="dark">
   <style>html{background:#000;color-scheme:dark}html:not(.noboot) body::after{content:'';position:fixed;inset:0;z-index:9998;background:#000;pointer-events:none}</style>
-  <script>try{var s=JSON.parse(localStorage.getItem('lino:v1')||'{}').settings||{};if(s.lite||s.mraq===false)document.documentElement.classList.add('noboot')}catch(e){}setTimeout(function(){document.documentElement.classList.add('noboot')},6000)</script>
+  <script>window.__css=new Promise(function(r){window.__cssOK=r});setTimeout(function(){document.documentElement.classList.add('noboot')},8000)</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Mraq</title>
   <meta name="description" content="Mraq – počasí pro líné. Otevřeš, víš, co si vzít na sebe.">
@@ -34,8 +34,10 @@
   <meta name="apple-mobile-web-app-title" content="Mraq">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800;900&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap&subset=latin-ext" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <!-- styly se načítají bez blokování → první snímek je hned černý (žádná bílá, než se stáhnou) -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800;900&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap&subset=latin-ext" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" as="style" href="style.css" onload="this.onload=null;this.rel='stylesheet';window.__cssOK&&window.__cssOK()" onerror="window.__cssOK&&window.__cssOK()">
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
 </head>
 <body>
   <div class="sky" id="sky" aria-hidden="true">
