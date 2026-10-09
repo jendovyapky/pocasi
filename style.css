@@ -73,14 +73,40 @@ body.scrubbing .sky { transition-duration: .25s; }
   position: absolute; inset: 0; opacity: .22; mix-blend-mode: overlay; pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-/* déšť – jemné čárky přes oblohu */
-.sky.rain::after {
-  content: ''; position: absolute; inset: -50% 0 0; pointer-events: none; opacity: .1;
-  background-image: repeating-linear-gradient(100deg, transparent 0 14px, rgba(255,255,255,.9) 14px 15px, transparent 15px 40px);
-  background-size: 100% 60px;
-  animation: rain .5s linear infinite;
-}
-@keyframes rain { to { transform: translateY(60px); } }
+/* ---------- Počasí na pozadí ---------- */
+.sky__fx, .sky__clouds, .sky__flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
+/* mraky: velké měkké chuchvalce pomalu plují přes horní část */
+.sky__clouds i { position: absolute; border-radius: 50%; background: rgba(255,255,255,.55); filter: blur(28px); animation: cloudDrift 60s linear infinite; }
+.sky__clouds i:nth-child(1) { width: 70vw; height: 22vh; top: 4%; left: -40%; }
+.sky__clouds i:nth-child(2) { width: 90vw; height: 26vh; top: 18%; left: -60%; animation-duration: 85s; animation-delay: -30s; opacity: .8; }
+.sky__clouds i:nth-child(3) { width: 60vw; height: 18vh; top: 34%; left: -50%; animation-duration: 72s; animation-delay: -50s; opacity: .6; }
+@keyframes cloudDrift { to { transform: translateX(200vw); } }
+body.dark .sky__clouds i { background: rgba(170, 180, 210, .16); }
+.sky.cloudy .sky__clouds { opacity: 1; }
+/* déšť: dvě vrstvy čárek, každá jinou rychlostí */
+.sky__fx { inset: -60px 0 0; background-repeat: repeat; }
+.sky.rain .sky__fx { opacity: 1; }
+.sky.rain .sky__fx--a { background-image: repeating-linear-gradient(104deg, transparent 0 22px, rgba(255,255,255,.55) 22px 23.5px, transparent 23.5px 60px); background-size: 100% 90px; animation: rainFall .55s linear infinite; opacity: .28; }
+.sky.rain .sky__fx--b { background-image: repeating-linear-gradient(100deg, transparent 0 40px, rgba(255,255,255,.4) 40px 41px, transparent 41px 95px); background-size: 100% 60px; animation: rainFall .9s linear infinite; opacity: .2; }
+.sky.heavy .sky__fx--a { opacity: .42; animation-duration: .4s; }
+.sky.heavy .sky__fx--b { opacity: .32; animation-duration: .65s; }
+@keyframes rainFall { to { transform: translateY(60px); } }
+/* sníh: vločky ve dvou vrstvách, pomalu padají a vlní se */
+.sky.snow .sky__fx { opacity: 1; }
+.sky.snow .sky__fx--a { background-image: radial-gradient(circle, #fff 0 2.8px, rgba(140,160,195,.45) 3.3px, transparent 4.2px), radial-gradient(circle, #fff 0 2px, rgba(140,160,195,.4) 2.5px, transparent 3.2px);
+  background-size: 90px 110px, 140px 130px; background-position: 0 0, 45px 60px; animation: snowFall 9s linear infinite; }
+.sky.snow .sky__fx--b { background-image: radial-gradient(circle, rgba(255,255,255,.9) 0 3.8px, rgba(140,160,195,.3) 4.4px, transparent 5.2px); background-size: 170px 190px; background-position: 30px 20px; animation: snowFall 14s linear infinite reverse; animation-direction: normal; filter: blur(1px); }
+@keyframes snowFall { from { transform: translate(0, -190px); } 50% { transform: translate(14px, 0); } to { transform: translate(0, 190px); } }
+/* mlha: mléčné pruhy se líně posouvají v dolní části */
+.sky.fog .sky__fx { opacity: 1; inset: 30% -30% 0; }
+.sky.fog .sky__fx--a { background: radial-gradient(60% 18% at 30% 40%, rgba(255,255,255,.75), transparent 70%), radial-gradient(55% 14% at 75% 70%, rgba(255,255,255,.6), transparent 70%); filter: blur(10px); animation: fogDrift 26s ease-in-out infinite alternate; }
+.sky.fog .sky__fx--b { background: radial-gradient(70% 16% at 60% 25%, rgba(255,255,255,.55), transparent 70%), radial-gradient(50% 12% at 20% 85%, rgba(255,255,255,.55), transparent 70%); filter: blur(14px); animation: fogDrift 34s ease-in-out infinite alternate-reverse; }
+body.dark .sky.fog .sky__fx { opacity: .35; }
+@keyframes fogDrift { to { transform: translateX(18%); } }
+/* bouřka: občas se celé nebe zableskne */
+.sky__flash { background: radial-gradient(80% 60% at 60% 10%, rgba(255,255,255,.9), rgba(220,230,255,.35) 60%, transparent); }
+.sky.storm .sky__flash { animation: skyFlash 7.5s steps(1) infinite; }
+@keyframes skyFlash { 0%, 71%, 74.5%, 100% { opacity: 0; } 72% { opacity: .75; } 73% { opacity: .15; } 73.8% { opacity: .55; } }
 
 /* ---------- Layout ---------- */
 .app {
@@ -396,7 +422,7 @@ body.dark .say { box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
 .set__about { margin: 22px 4px 4px; font: 11px/1.6 var(--mono); color: rgba(0,0,0,.4); text-align: center; }
 /* úsporné animace */
 body.lite .sky__blob, body.lite .orb, body.lite .orb__z i { animation: none !important; }
-body.lite .sky.rain::after { display: none; }
+body.lite .sky__fx, body.lite .sky__clouds i, body.lite .sky__flash { animation: none !important; }
 body.no-mraq .buddy { display: none; }
 
 .foot { margin-top: 30px; font-size: 11px; line-height: 1.6; color: var(--ink-2); text-align: center; }

@@ -83,8 +83,8 @@ const PAL = {               //   nahoře      uprostřed   dole        záře
   dawn:   ['#6f7bd0', '#f3a6a0', '#ffb36b', '#ff8a3d'],
   morning:['#9cc0ff', '#ffe3c4', '#ffc98a', '#fff1a8'],
   day:    ['#6fb5ff', '#b9f0ff', '#c4f59a', '#8be36b'],
-  golden: ['#ffd6c2', '#ffd23f', '#ff8a1f', '#ffe066'],
-  dusk:   ['#7f8de0', '#f6a38a', '#ff6b3d', '#ffb36b'],
+  golden: ['#f9c4a8', '#ffb86b', '#ff8a3d', '#ffd27a'],
+  dusk:   ['#7f8de0', '#f6a38a', '#ff8a3d', '#ffc06b'],
 };
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const toHex = (c) => '#' + c.map((v) => pad2(Math.round(clamp(v, 0, 255)).toString(16))).join('');
@@ -127,8 +127,12 @@ function applySky(f) {
   const night = lum(p[1]) < 0.3;
   const grey = night ? '#2a2d3d' : '#a7adb8';
   p = p.map((c) => mix(c, grey, cloud * 0.55));
-  if (rain > 0.1 || kind(code) === 'rain' || kind(code) === 'storm') p = p.map((c) => mix(c, night ? '#1b2233' : '#6f7d93', clamp(0.25 + rain * 0.15, 0, 0.6)));
-  if (kind(code) === 'snow') p = p.map((c) => mix(c, night ? '#3a4157' : '#e9eef5', 0.35));
+  const k = kind(code);
+  // každé počasí má vlastní charakter: déšť tmavší a chladný, bouřka skoro olověná, sníh světlý, mlha mléčná
+  if (k === 'storm') p = p.map((c, i) => mix(c, night ? '#141a2a' : '#4a5470', i === 3 ? .5 : .62));
+  else if (k === 'rain' || rain > 0.1) p = p.map((c) => mix(c, night ? '#1b2233' : '#5f6d86', clamp(0.35 + rain * 0.15, 0, 0.62)));
+  if (k === 'snow') p = p.map((c, i) => mix(c, night ? '#3a4157' : i === 3 ? '#ffffff' : i === 0 ? '#c9d6e8' : '#eef3f9', .66));
+  if (k === 'fog') p = p.map((c) => mix(c, night ? '#3b3f4c' : '#d3d6dc', .6));
   // vzhled: tmavý = barvy denní doby zůstanou, jen ztlumené do noční modré; světlý = noc se zesvětlí
   const theme = themeNow();
   if (theme === 'dark') p = p.map((c, i) => mix(c, i === 3 ? '#2a2840' : '#101117', i === 3 ? .4 : .66));
@@ -144,7 +148,13 @@ function applySky(f) {
 
   const dark = theme === 'dark' || (theme !== 'light' && (lum(p[0]) + lum(p[1])) / 2 < 0.42);
   document.body.classList.toggle('dark', dark);
-  $('#sky').classList.toggle('rain', rain > 0.2 || kind(code) === 'rain' || kind(code) === 'storm');
+  const sky = $('#sky');
+  sky.classList.toggle('rain', rain > 0.2 || k === 'rain' || k === 'storm');
+  sky.classList.toggle('heavy', rain > 1.5 || k === 'storm' || code === 65 || code === 82);
+  sky.classList.toggle('storm', k === 'storm');
+  sky.classList.toggle('snow', k === 'snow');
+  sky.classList.toggle('fog', k === 'fog');
+  sky.classList.toggle('cloudy', cloud > .55 && k !== 'fog');
   document.querySelector('meta[name=theme-color]').content = p[0];
 }
 
