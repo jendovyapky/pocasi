@@ -307,11 +307,27 @@ function toggleWear(btn) {
   btn.classList.toggle('done', k < 0); btn.setAttribute('aria-pressed', k < 0);
   navigator.vibrate?.(k < 0 ? [6, 40, 6] : 4);
 }
-function wearList(s) {
+/* „Vem si:“ – ukáže max 2 věci, ať se vejdou. Při každém otevření appky jiné (wearSeed).
+   Deštník/sníh má přednost, zbytek skupin (oblečení, UV, vítr) se střídá. */
+let wearSeed = 0;
+function wearPick(s) {
+  const g = wearList(s, true), seed = wearSeed;
+  const rot = (a, n) => a.map((_, i) => a[(i + n) % a.length]);
+  const key = g.filter((x) => x.key).map((x) => x.items.slice(0, 1)); // deštník je deštník, žádný vtipy navíc
+  const rest = rot(g.filter((x) => !x.key), seed).map((x) => rot(x.items, seed));
+  const all = [...key, ...rest], out = [];
+  for (const a of all) if (out.length < 2 && a[0]) out.push(a[0]);
+  for (const a of all) for (const x of a.slice(1)) if (out.length < 2) out.push(x);
+  return out;
+}
+function wearList(s, grouped) {
   const f = (s.maxFeels + s.minFeels) / 2;
-  const w = [];
+  const w = [], groups = [];
   // každá položka v hlasky.txt může mít víc věcí oddělených „ | “
-  const add = (k, d) => w.push(...T('obleceni.' + k, {}, d).split('|').map((x) => x.trim()).filter(Boolean));
+  const add = (k, d) => {
+    const items = T('obleceni.' + k, {}, d).split('|').map((x) => x.trim()).filter(Boolean);
+    w.push(...items); groups.push({ items, key: /^(destnik|snih)/.test(k) });
+  };
   if (f >= 25) add('25', 'triko | kraťasy');
   else if (f >= 20) add(s.minFeels < 15 ? '20-vecer' : '20', s.minFeels < 15 ? 'triko | něco přes na večer' : 'triko | lehké kalhoty');
   else if (f >= 15) add('15', 'lehká mikina');
@@ -325,7 +341,7 @@ function wearList(s) {
   if (s.maxUv >= 6) add('uv-silne', 'brýle + krém');
   else if (s.maxUv >= 4 && !s.cloudy) add('uv', 'sluneční brýle');
   if (s.maxWind > 38) add('vitr', 'nic, co uletí');
-  return w;
+  return grouped ? groups : w;
 }
 
 /* ---------------- Render: statické části ---------------- */
@@ -344,8 +360,11 @@ function renderStatic() {
   state.delta = delta;
   // „Vem si:“ – věci jde odškrtnout (pamatuje si to do konce dne)
   const packed = wearPacked();
-  $('#wear').innerHTML = `<span style="--d:0">${T('obleceni.nadpis', {}, 'Vem si:')}</span>` + wearList(sum).map((w, i) =>
+  const wr = $('#wear');
+  wr.innerHTML = `<span style="--d:0">${T('obleceni.nadpis', {}, 'Vem si:')}</span>` + wearPick(sum).map((w, i) =>
     `<button class="wear__item${packed.includes(w) ? ' done' : ''}" style="--d:${i + 1}" aria-pressed="${packed.includes(w)}">${w}</button>`).join('');
+  // když se dvě nevejdou na řádek, nech jen tu první
+  requestAnimationFrame(() => { const it = wr.querySelectorAll('.wear__item'); if (it.length > 1 && wr.scrollWidth > wr.clientWidth + 1) it[it.length - 1].remove(); });
 
   // pohoda – vlnka na 24 h (po půl hodinách) + kdy je nejlíp
   const moods = [...Array(48).keys()].map((k) => mood(state.i0 + k / 2));
@@ -910,7 +929,7 @@ async function loadModelGrid() {
   const L = window.L; if (!L || !R.map) return;
   const key = `${state.place.lat.toFixed(2)},${state.place.lon.toFixed(2)}`;
   if (R.model.length && R.modelKey === key && Date.now() - R.modelAt < 10 * 60e3) { RL.model = true; radarLoadTick(); return; }
-  const NX = 11, NY = 13, dLon = 0.5, dLat = 0.42;
+  const NX = 15, NY = 19, dLon = 0.36, dLat = 0.3; // 285 bodů (Open-Meteo: každý bod = 1 volání, limit 600/min)
   const lats = [], lons = [];
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
     lats.push((state.place.lat + (j - (NY - 1) / 2) * dLat).toFixed(2));
@@ -922,23 +941,42 @@ async function loadModelGrid() {
     const arr = Array.isArray(j) ? j : [j];
     if (arr.length !== NX * NY || !arr[0].minutely_15) { RL.model = true; radarLoadTick(); return; }
     const times = arr[0].minutely_15.time.map((s) => parseLocal(s)); // GMT → přímo epocha
-    const small = document.createElement('canvas'); small.width = NX; small.height = NY;
-    const sg = small.getContext('2d');
-    const big = document.createElement('canvas'); big.width = NX * 28; big.height = NY * 28;
-    const bg = big.getContext('2d'); bg.imageSmoothingEnabled = true; bg.imageSmoothingQuality = 'high';
     R.model.forEach((m) => R.map.removeLayer(m.layer));
-    const south = state.place.lat - ((NY - 1) / 2 + .5) * dLat, north = state.place.lat + ((NY - 1) / 2 + .5) * dLat;
-    const west = state.place.lon - ((NX - 1) / 2 + .5) * dLon, east = state.place.lon + ((NX - 1) / 2 + .5) * dLon;
+    // obrázek pokrývá přesně mřížku (krajní body = okraje)
+    const south = state.place.lat - (NY - 1) / 2 * dLat, north = state.place.lat + (NY - 1) / 2 * dLat;
+    const west = state.place.lon - (NX - 1) / 2 * dLon, east = state.place.lon + (NX - 1) / 2 * dLon;
+    // hodnoty se interpolují (ne barvy) → ostré, radarově vypadající okraje místo šmouh.
+    // Leaflet obrázek natahuje v Mercatoru → pro každý řádek pixelů spočítat skutečnou zem. šířku
+    const W = 300, Hh = 380, merc = (la) => Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360));
+    const mN = merc(north), mS = merc(south);
+    const rowJ = new Float32Array(Hh), colI = new Float32Array(W);
+    for (let y = 0; y < Hh; y++) {
+      const la = (2 * Math.atan(Math.exp(mN + (mS - mN) * (y + .5) / Hh)) - Math.PI / 2) * 180 / Math.PI;
+      rowJ[y] = clamp((la - south) / dLat, 0, NY - 1.0001);
+    }
+    for (let x = 0; x < W; x++) colI[x] = clamp((x + .5) / W * (NX - 1), 0, NX - 1.0001);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = Hh;
+    const g = cv.getContext('2d');
     R.model = times.map((t, k) => {
-      const img = sg.createImageData(NX, NY);
-      for (let jj = 0; jj < NY; jj++) for (let ii = 0; ii < NX; ii++) {
-        const v = (arr[jj * NX + ii].minutely_15.precipitation[k] ?? 0) * 4; // mm/h
-        const c = rainColor(v); const o = ((NY - 1 - jj) * NX + ii) * 4; // sever nahoře
-        if (c) { img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = c[3] * 255; }
+      const v = new Float32Array(NX * NY);
+      for (let n = 0; n < NX * NY; n++) v[n] = (arr[n].minutely_15.precipitation[k] ?? 0) * 4; // mm/h
+      const img = g.createImageData(W, Hh), d = img.data;
+      for (let y = 0; y < Hh; y++) {
+        const j0 = rowJ[y] | 0, fy = rowJ[y] - j0;
+        const ey = Math.min(y, Hh - 1 - y) / (Hh * 0.06); // okraje plynule do ztracena
+        for (let x = 0; x < W; x++) {
+          const i0 = colI[x] | 0, fx = colI[x] - i0, b = j0 * NX + i0;
+          const val = (v[b] * (1 - fx) + v[b + 1] * fx) * (1 - fy) + (v[b + NX] * (1 - fx) + v[b + NX + 1] * fx) * fy;
+          if (val < 0.06) continue;
+          const c = rainColor(Math.max(val, 0.1)); if (!c) continue;
+          const edge = Math.min(1, ey, Math.min(x, W - 1 - x) / (W * 0.06));
+          const o = (y * W + x) * 4;
+          d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2];
+          d[o + 3] = c[3] * 255 * edge * clamp((val - 0.06) / 0.12, 0, 1); // měkký okraj srážek
+        }
       }
-      sg.putImageData(img, 0, 0);
-      bg.clearRect(0, 0, big.width, big.height); bg.drawImage(small, 0, 0, big.width, big.height);
-      const layer = L.imageOverlay(big.toDataURL('image/png'), [[south, west], [north, east]], { opacity: 0, className: 'rv-model', interactive: false }).addTo(R.map);
+      g.putImageData(img, 0, 0);
+      const layer = L.imageOverlay(cv.toDataURL('image/png'), [[south, west], [north, east]], { opacity: 0, className: 'rv-model', interactive: false }).addTo(R.map);
       return { t, layer };
     });
     R.modelAt = Date.now(); R.modelKey = key; RL.model = true; radarLoadTick();
@@ -985,10 +1023,10 @@ function setRadarTime(t, force) {
   const ahead = isFuture ? R.sel - lastFrame : 0;
   R.shiftMs = R.motion ? ahead : 0;
   const hasModel = R.model.length > 0;
-  // s modelem: posunutý radar během první půlhodiny plynule přejde do předpovědi modelu
-  const futOp = hasModel ? clamp(0.8 * (1 - ahead / (40 * 60e3)), 0, 0.8) : R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
+  // s modelem: posunutý radar během ~20 min zmizí, model naskočí hned a do čtvrthodiny je naplno
+  const futOp = hasModel ? clamp(0.75 * (1 - ahead / (20 * 60e3)), 0, 0.75) : R.motion ? clamp(0.8 - (ahead / (3 * HOUR)) * 0.45, 0.3, 0.8) : 0.35;
   if (hasModel) {
-    const mFade = isFuture ? clamp(ahead / (25 * 60e3), 0, 1) * 0.85 : 0;
+    const mFade = isFuture ? clamp(0.35 + ahead / (15 * 60e3), 0, 1) * 0.9 : 0;
     let k = 0; while (k < R.model.length - 1 && R.model[k + 1].t <= R.sel) k++;
     const a0 = R.model[k], a1 = R.model[k + 1] || a0;
     const w = a1 === a0 ? 0 : clamp((R.sel - a0.t) / (a1.t - a0.t), 0, 1);
@@ -1304,6 +1342,7 @@ let mraq = null;
 async function boot() {
   mraq = createMraq();
   window.__mraq = mraq; // pro náhledy výrazů
+  wearSeed = (load().wearSeed || 0) + 1; save({ wearSeed }); // „Vem si“ pokaždé jiné
   applySettings();
   wire();
   wireSettings();

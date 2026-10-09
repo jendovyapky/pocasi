@@ -175,14 +175,17 @@ srovnani.extrem-konec = (o {stupne}° {smer} než včera)
 
 # ---------- „Vem si:“ ----------
 # víc věcí v jednom řádku odděluj svislítkem |
+# appka ukáže max 2 věci (co se vejdou) a při každém otevření jiné,
+# takže každá věc musí dávat smysl i sama (ne „něco pod ni“ bez bundy)
+# deštník/sníh: ukáže se vždycky jen první věc z řádku
 # čísla = průměrná pocitová teplota na zbytek dne (25+ °C, 20+, 15+, 10+, 4+, -2+, pod -2)
 obleceni.nadpis = Vem si:
 obleceni.25 = plavky | litr vody
 obleceni.20 = tvůj nejlepší letní fit
 obleceni.20-vecer = dobrej outfit | mikinu na večer
 obleceni.15 = oblíbenou mikinu
-obleceni.10 = kapesníky | mikinu | bundu | něco mezi
-obleceni.4 = bundu | něco pod ni
+obleceni.10 = kapesníky | mikinu, bundu nebo něco mezi
+obleceni.4 = bundu a něco pod ni | kapesníky
 obleceni.-2 = topení | dvě bundy
 obleceni.mraz = termoprádlo | horkej čaj
 # přidává se navíc podle počasí:
