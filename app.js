@@ -435,8 +435,10 @@ function mascotMood(f) {
   if (same && cloud >= 60) return 'stejne';
   if (k === 'fog') return 'mlha';
   if (cloud >= 85) return 'nuda';
-  if ((k === 'clear' || k === 'part') && feels >= 13) return 'radost';
-  return feels < 9 ? 'zima' : 'pohoda';
+  const sunUp = t > 0 && t < 1;
+  if (!sunUp && (k === 'clear' || k === 'part')) return 'vecer'; // po západu slunce, před 22 h
+  if (sunUp && code <= 1 && feels >= 13) return 'radost';         // jasno / skoro jasno přes den
+  return 'pohoda';
 }
 function mascotCtx(f) {
   const H = state.data.hourly, D = state.data.daily, c = state.data.current;

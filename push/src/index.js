@@ -47,8 +47,8 @@ export default {
         const rec = await getRec(env, id);
         const s = rec?.sub || sub;
         const texts = await loadTexts(env);
-        const line = pick(texts.lines.radost || ['Funguju!'], Date.now());
-        const r = await sendPush(env, s, { title: 'Mraq · zkouška', body: fill(line, { teplota: '21', misto: rec?.place?.name || '' }) + '\nNotifikace fungujou.', tag: 'test' });
+        const line = pickLine(texts.lines.radost || ['Funguju!'], Date.now(), { teplota: '21', misto: rec?.place?.name || '' });
+        const r = await sendPush(env, s, { title: 'Mraq · zkouška', body: line + '\nNotifikace fungujou.', tag: 'test' });
         return json({ ok: r.ok, status: r.status });
       }
       return json({ error: 'neznámá cesta' }, 404);
@@ -167,7 +167,7 @@ function morningMsg(w, place, texts) {
   };
   const mood = s.storm ? 'strach' : s.snow ? 'snih' : s.sumRain >= 1 || s.maxProb >= 60 ? 'smutek' : s.maxGust >= 55 ? 'nervy' : s.maxFeels >= 29 ? 'vztek' : s.maxFeels <= 4 ? 'zima' : s.cloudy ? 'nuda' : s.maxFeels >= 14 ? 'radost' : 'pohoda';
   const vars = { teplota: Math.round(w.current?.temperature_2m ?? day.min), pocitove: Math.round(s.maxFeels), mm: fmt(s.sumRain), stav: WMO[day.code] || '', misto: place.name, sance: s.maxProb, vitr: Math.round(s.maxGust / 1.6), narazy: Math.round(s.maxGust) };
-  const line = fill(pick(texts.lines[mood] || texts.lines.pohoda || [''], hash(day.day + place.name)), vars);
+  const line = pickLine(texts.lines[mood] || texts.lines.pohoda || [''], hash(day.day + place.name), vars);
   const rainStart = hrs.find((h) => h.mm >= 0.2 || h.prob >= 60);
   const rain = rainStart ? T(texts, 'dest.sucho-do', { cas: hhmm(rainStart.t) }, 'Do {cas} sucho, pak to začne kapat.') : '';
   const wear = wearList(s, texts);
@@ -196,7 +196,7 @@ function extremeMsg(w, texts) {
   if (snowHr) { items.push(`sníh od ${hhmm(snowHr.t)}`); mood = mood || 'snih'; }
   if (!items.length) return null;
   const vars = { pocitove: Math.round(mood === 'zima' ? minFeels : maxFeels), narazy: Math.round(gust), vitr: Math.round(gust / 1.6), mm: fmt(day.sum), teplota: Math.round(day.max), stav: WMO[day.code] || '' };
-  const line = fill(pick(texts.lines[mood] || [''], hash(day.day)), vars);
+  const line = pickLine(texts.lines[mood] || [''], hash(day.day), vars);
   return { title: `Zítra: ${items[0]}`, body: [items.length > 1 ? 'A k tomu ' + items.slice(1).join(', ') + '.' : '', line].filter(Boolean).join('\n'), tag: 'extreme' };
 }
 
@@ -236,7 +236,11 @@ async function loadTexts(env) {
   return out;
 }
 const T = (texts, key, vars, def) => fill(texts.texty[key] ?? def, vars);
-const fill = (s, v) => String(s).replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? ''));
+const fill = (s, v) => { const t = String(s).replace(/\{(\w+)\}/g, (_, k) => (v[k] ?? '')); return t.charAt(0).toUpperCase() + t.slice(1); };
+// stejné pojistky jako v appce: hláška s proměnnou, která by zněla hloupě, se přeskočí
+const numv = (x) => parseFloat(String(x ?? '').replace(',', '.'));
+const usable = (s, v) => !((/\{mm\}/.test(s) && !(numv(v.mm) >= 0.5)) || (/\{sance\}/.test(s) && !(numv(v.sance) >= 50)) || (/\{vitr\}/.test(s) && !(numv(v.vitr) >= 30)) || (/\{narazy\}/.test(s) && !(numv(v.narazy) >= 45)));
+function pickLine(list, seed, v) { const ok = list.filter((s) => usable(s, v)); return fill(pick(ok.length ? ok : list, seed), v); }
 function hash(s) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 

@@ -24,13 +24,19 @@
 #  Mraq vybírá náladu podle počasí v čase, kam se zrovna díváš
 #  (i když posouváš časovou osu). Při ťuknutí na Mraqa řekne
 #  další hlášku z té samé skupiny.
+#
+#  Pojistky, ať hlášky nekecají:
+#   - první písmeno je vždycky velké ({stav} na začátku je OK)
+#   - hláška s {mm} se řekne jen při 0,5 mm a víc, se {sance} jen
+#     od 50 %, s {vitr} jen od 30 km/h, s {narazy} jen od 45 km/h
+#   - každá skupina by měla mít aspoň jednu hlášku bez proměnných
 # ============================================================
 
 
 # ---------- Nálady Mraqa (obličej + barva) ----------
 
 [radost]
-# jasno / polojasno, příjemně (cca 14–28 °C)
+# přes den (svítí slunce), jasno nebo skoro jasno, pocitově 13–28 °C
 {teplota}° a sluníčko. Konečně počasí, za který se nemusíme stydět.
 Jasno! Dneska došly mraqy.
 Venku je {teplota}°. Klidně bych i vyrazil ven.
@@ -38,11 +44,18 @@ Modrá obloha. Sluneční brýle se budou hodit.
 Hezky. Fakt hezky. Až je to podezřelý.
 
 [pohoda]
-# solidní průměr., mírně
+# nic zvláštního: polojasno nebo oblačno, mírně, bez deště
+# (může být i ráno, večer nebo v chladnu kolem 5–12 °C → nic o slunci)
 {stav}, {teplota}°. Dá se. Nic víc, nic míň.
 Takový počasí na pohodu.
 {teplota}°. Mikina a jdeš.
 Nic zvláštního. Počasí na klid.
+
+[vecer]
+# po západu slunce do 22:00, jasno nebo polojasno (nic o slunci!)
+Jasnej večer. Hvězdy jsou dneska v provozu.
+{teplota}° a jasno. Ideální na procházku, než půjdu spát.
+Slunce už má padla. Já za chvíli taky.
 
 [ospaly]
 # ráno po probuzení (9:00–10:30)
@@ -60,7 +73,7 @@ Zzz… {teplota}°… zzz… zzz.
 Je noc. Počasí spí, ty běž taky.
 
 [smutek]
-# déšť
+# déšť (opravdu padá aspoň trochu)
 Prší. Zůstaň doma, pokud můžeš.
 {sance} % šance na déšť. Já bych tomu říkal jistota.
 Mokro. Deštník je dneska tvůj kámoš, pokud nemáš auto.
@@ -113,7 +126,7 @@ Nárazy až {narazy} km/h. Zavři okna a ignoruj to.
 Česat se dneska fakt nemá smysl.
 
 [zima]
-# zima, (pocitově 0 °C)
+# zima: pocitově 4 °C a míň
 Pocitově {pocitove}°. Jdu se tulit k topení.
 Zima. Klepe se mi teploměr.
 {pocitove}°. Omotej se všim, co máš.

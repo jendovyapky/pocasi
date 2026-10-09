@@ -14,6 +14,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const BASE = { open: 1, lidT: 0, happy: 0, eyeW: 15, eyeH: 17, round: .45, lookX: 0, lookY: 0, spark: 0, blush: 0, asym: 0 };
 export const MOODS = {
   radost:     { name: 'má radost',       color: '#f7c948', p: { happy: .8, eyeW: 15, eyeH: 16, blush: .5 }, idle: 'hop' },
+  vecer:      { name: 'má hezkej večer', color: '#9d8fe0', p: { happy: .55, open: .9 } },
   pohoda:     { name: 'v pohodě',        color: '#8fd3b8', p: {} },
   ospaly:     { name: 'je ospalej',      color: '#a3a9e8', p: { open: .42, lidT: -.35, lookY: .5 }, idle: 'yawn' },
   spi:        { name: 'spí',             color: '#6c72c4', p: { open: 0 }, sleep: true },
@@ -33,7 +34,7 @@ export const MOODS = {
 const FALLBACK = {
   radost: ['{teplota}° a sluníčko. Konečně.'], pohoda: ['{stav}, {teplota}°. Dá se.'], ospaly: ['Ještě spím. {teplota}° je na mě moc brzo.'],
   spi: ['Pšt, spím. Slunce vyleze v {vychod}.'], smutek: ['Prší. Nebrečím, to jen ze mě padá voda.'], znechuceni: ['Mrholí. Fuj.'],
-  nuda: ['Zase zataženo. Fakt originální.'], mlha: ['Mlha. Svět se dneska načítá pomalejc.'], stejne: ['Ctrl+C, Ctrl+V ze včerejška.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
+  nuda: ['Zase zataženo. Fakt originální.'], mlha: ['Mlha. Svět se dneska načítá pomalejc.'], vecer: ['Jasnej večer. Hvězdy jsou v provozu.'], stejne: ['Ctrl+C, Ctrl+V ze včerejška.'], strach: ['Bouřka! Schovej se.'], vztek: ['{pocitove}°?! Rozpouštím se.'],
   nervy: ['Fouká {vitr} km/h! Drž si čepici.'], zima: ['Pocitově {pocitove}°. Brrr.'], snih: ['Sněží!!'],
   'pohoda-popisky': ['Paráda', 'Fajn', 'Ujde to', 'Meh', 'Zůstaň doma'],
 };
@@ -58,7 +59,8 @@ export async function loadLines() {
   } catch {}
   return LINES;
 }
-const fill = (s, ctx) => s.replace(/\{(\w+)\}/g, (_, k) => (ctx[k] ?? `{${k}}`));
+// doplní proměnné a první písmeno dá velké („zataženo, 14°“ → „Zataženo, 14°“)
+const fill = (s, ctx) => { const t = s.replace(/\{(\w+)\}/g, (_, k) => (ctx[k] ?? `{${k}}`)); return t.charAt(0).toUpperCase() + t.slice(1); };
 
 /* ---------- Tečkové (pixel) oči ---------- */
 const PITCH = 5.4, DOT = 4.5; // rozteč a velikost teček ve viewBoxu 120×120 (jako písmo Doto)
@@ -130,7 +132,7 @@ export function createMraq() {
     droop: () => ({ dur: 1200, fn: (k) => { const s = Math.sin(k * Math.PI); return { p: { lookY: lerp(target.lookY, 1, s), lidT: target.lidT - .2 * s } }; } }),
     tilt: () => { kick('tilt'); return { dur: 900, fn: (k) => ({ p: { asym: target.asym + Math.sin(k * Math.PI) * .4, lookX: -.8 * Math.sin(k * Math.PI) } }) }; },
   };
-  const TAP = { mlha: 'roll', stejne: 'roll', radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
+  const TAP = { vecer: 'wink', mlha: 'roll', stejne: 'roll', radost: 'hop', pohoda: 'wink', ospaly: 'yawn', spi: 'wake', smutek: 'droop', znechuceni: 'tilt', nuda: 'roll', strach: 'shake', vztek: 'shake', nervy: 'dart', zima: 'shiver', snih: 'hop' };
 
   function kick(cls) { orb.classList.remove('hop', 'shake', 'shiver', 'tilt'); void orb.offsetWidth; orb.classList.add(cls); }
   function run(name) { const a = ACTIONS[name]?.(); if (a) action = { ...a, t0: performance.now() }; }
@@ -184,10 +186,16 @@ export function createMraq() {
       if (i >= chars.length) { clearInterval(typeTimer); setTimeout(() => caret.remove(), 1600); }
     }, 32);
   }
+  // hláška s proměnnou, která by zněla hloupě (0,1 mm „hodně kapek“, 20 % „jistota“), se přeskočí
+  const num = (v) => parseFloat(String(v ?? '').replace(',', '.'));
+  const usable = (s) => !(
+    (/\{mm\}/.test(s) && !(num(ctx.mm) >= 0.5)) || (/\{sance\}/.test(s) && !(num(ctx.sance) >= 50)) ||
+    (/\{vitr\}/.test(s) && !(num(ctx.vitr) >= 30)) || (/\{narazy\}/.test(s) && !(num(ctx.narazy) >= 45)));
   function nextLine(key, seed) {
     const list = LINES[key] || FALLBACK[key] || [''];
     if (lineIdx[key] == null) lineIdx[key] = (seed ?? Math.floor(Math.random() * 1e6)) % list.length;
     else lineIdx[key] = (lineIdx[key] + 1) % list.length;
+    for (let n = 0; n < list.length && !usable(list[lineIdx[key]]); n++) lineIdx[key] = (lineIdx[key] + 1) % list.length;
     return fill(list[lineIdx[key]], ctx);
   }
 
