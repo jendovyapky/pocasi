@@ -1,6 +1,6 @@
 // Service worker: aplikace se načte i offline, data jdou vždy nejdřív ze sítě.
-const VERSION = 'lino-v3';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png'];
+const VERSION = 'mraq-v1';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'mraq.js', 'hlasky.txt', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/mraq.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

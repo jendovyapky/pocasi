@@ -1,7 +1,7 @@
 {
-  "name": "Líné počasí",
-  "short_name": "Líno",
-  "description": "Počasí pro líné. Otevřeš, víš, co si vzít na sebe.",
+  "name": "Mraq",
+  "short_name": "Mraq",
+  "description": "Mraq – počasí pro líné. Otevřeš, víš, co si vzít na sebe.",
   "lang": "cs",
   "start_url": "./",
   "scope": "./",

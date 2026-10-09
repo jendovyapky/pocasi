@@ -1,4 +1,5 @@
-/* Líné počasí — celá logika v jednom souboru, bez buildu. */
+/* Mraq — počasí pro líné. Logika bez frameworku a bez buildu (maskot je v mraq.js). */
+import { createMraq, loadLines, LINES } from './mraq.js';
 
 const $ = (s) => document.querySelector(s);
 const HOUR = 3600e3;
@@ -232,39 +233,6 @@ function lazyPhrase(delta) {
   return { big: delta > 0 ? 'úplně jiné léto' : 'úplně jiná zima', end: `(o ${Math.round(a)}° ${dir} než včera)` };
 }
 
-const JOKES = {
-  storm: ['Nebe dneska řve víc než soused u hokeje. Drž se pod střechou.', 'Bouřka. Ideální den na to dobít mobil a nic nedělat.'],
-  snow: ['Sněží. Zima si vzpomněla, že existuje.', 'Venku je to jak z Mrazíka. Jen bez happy endu na zastávce.'],
-  rain: ['Mraky dneska brečí víc než ty v pondělí ráno.', 'Deštník není doplněk. Deštník je životní postoj.', 'Prší. Ideální výmluva, proč jsi neběhal.'],
-  drizzle: ['Ten typ deště, co skoro neprší, ale mokrý jsi stejně.', 'Mrholí. Vlasy to vzdaly předem.'],
-  fog: ['Mlha jak v mlýně. Neviditelnost zdarma.', 'Mlha. Svět se dneska načítá pomaleji.'],
-  hot: ['Venku je jak v troubě na 180. Peče se od 11 do 17.', 'Vedro. Stín je dneska nejdražší nemovitost.'],
-  warm: ['Sluníčko maká na plný úvazek. Ty nemusíš.', 'Dneska se to dá. Klidně i bez výmluv.'],
-  cloud: ['Šedivo. Počasí, co se nemůže rozhodnout, jako ty u oběda.', 'Zataženo. Slunce má home office.'],
-  cold: ['Mrzne. Nos ti poděkuje za šálu.', 'Je zima. Rukavice nejsou slabost, jsou to rukavice.'],
-  chilly: ['Chladno. Mikina dneska není volitelná.', 'Svěží, jak říkají lidi, kterým je zima.'],
-  wind: ['Fouká tak, že ti udělá účes, o který jsi nestál.', 'Vítr. Dneska nenos nic, co může uletět. Včetně plánů.'],
-  same: ['Včerejšek si dal reprízu.', 'Ctrl+C, Ctrl+V ze včerejška.'],
-  night: ['Jasná noc. Hvězdy svítí, topení taky.', 'Noc. Počasí taky spí, tak co ty.'],
-};
-function jokeFor(sum, delta) {
-  const seed = hashStr(dayKey(nowLocal()) + state.place.name);
-  let k;
-  if (sum.storm) k = 'storm';
-  else if (sum.snow) k = 'snow';
-  else if (sum.rainy && sum.drizzle) k = 'drizzle';
-  else if (sum.rainy) k = 'rain';
-  else if (sum.maxWind > 38) k = 'wind';
-  else if (sum.fog) k = 'fog';
-  else if (sum.maxFeels >= 29) k = 'hot';
-  else if (sum.minFeels <= -1 && sum.maxFeels < 4) k = 'cold';
-  else if (Math.abs(delta) < 1.5) k = 'same';
-  else if (sum.maxFeels < 11) k = 'chilly';
-  else if (sum.cloudy) k = 'cloud';
-  else k = 'warm';
-  return pick(JOKES[k], seed);
-}
-
 function daySummary() { // zbytek dne (teď → 22:00, min. 6 h)
   const H = state.data.hourly, i0 = state.i0;
   const n = Math.max(6, 22 - new Date(H.t[i0]).getUTCHours());
@@ -318,20 +286,25 @@ function renderStatic() {
   $('#lazyBig').innerHTML = ph.big.split(' ').map((w, i) => `<span class="w" style="--d:${i}">${w}</span>`).join(' ');
   $('#lazyEnd').textContent = ph.end;
   const sum = daySummary();
-  $('#lazyJoke').textContent = jokeFor(sum, delta);
+  state.delta = delta;
   $('#wear').innerHTML = ['Vem si:', ...wearList(sum)].map((w, i) => `<span style="--d:${i}">${w}</span>`).join('');
 
-  // pohoda – vlnka za 24 h
+  // pohoda – vlnka na 24 h (po půl hodinách) + kdy je nejlíp
   const moods = [...Array(48).keys()].map((k) => mood(state.i0 + k / 2));
-  $('#wave').innerHTML = moods.map((m, k) => `<i data-k="${k}" style="height:${6 + m * 0.58}px"></i>`).join('');
+  const best = moods.reduce((bi, m, k) => (m > moods[bi] ? k : bi), 0);
+  $('#wave').innerHTML = moods.map((m, k) => `<i data-k="${k}" class="${k === best ? 'best' : ''}" style="height:${6 + m * 0.5}px"></i>`).join('');
+  $('#waveMid').textContent = hhmm(H.t[state.i0 + 12]);
+  state.best = { k: best, f: state.i0 + best / 2, m: moods[best] };
+  const bestMs = H.t[state.i0] + best * HOUR / 2;
+  $('#moodBest').textContent = best <= 1 ? 'nejlíp je teď' : `nejlíp ${dayKey(bestMs) !== dayKey(now) ? 'zítra ' : ''}${hhmm(bestMs)}`;
 
-  // déšť – tečky na 12 h
+  // déšť – sloupce na 12 h: výška = šance, modrá = opravdu naprší
   const cols = [...Array(12).keys()].map((k) => state.i0 + k);
-  $('#rainDots').innerHTML = cols.map((i, k) => {
-    const p = H.prob[i] ?? 0, wet = H.precip[i] >= 0.1, n = Math.round(p / 10);
-    return `<div class="col" data-i="${i}">${[...Array(10).keys()].map((j) => `<i style="--d:${k * 10 + j}" class="${j < Math.max(1, n) ? 'f' + (wet ? ' wet' : '') : ''}"></i>`).join('')}</div>`;
+  $('#rainBars').innerHTML = cols.map((i, k) => {
+    const p = H.prob[i] ?? 0, mm = H.precip[i] ?? 0;
+    return `<div class="b ${mm >= 0.1 ? 'wet' : ''}" data-i="${i}" style="--h:${Math.max(4, p)}%;--d:${k}" title="${hhmm(H.t[i])}: ${p} %, ${fmtMm(mm)} mm"><i></i></div>`;
   }).join('');
-  $('#rainTo').textContent = hhmm(H.t[state.i0 + 11]);
+  $('#rainAxis').innerHTML = `<span>teď</span><span>${hhmm(H.t[state.i0 + 6])}</span><span>${hhmm(H.t[state.i0 + 11])}</span>`;
   $('#rainNote').textContent = rainSentence();
 
   // části dne vs včera
@@ -357,14 +330,81 @@ function renderStatic() {
   $('#updated').textContent = `Aktualizováno ${new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function mood(f) {
+function moodParts(f) { // kolik bodů z 100 bere teplota, déšť, vítr, mraky a tma
   const H = state.data.hourly;
   const feels = at(H.feels, f), prob = at(H.prob, f), wind = at(H.wind, f), cloud = at(H.cloud, f), rain = at(H.precip, f);
   const isDay = at(H.isDay, f) > 0.5;
-  let s = 100 - Math.abs(feels - 21) * 3.2 - prob * 0.35 - rain * 12 - Math.max(0, wind - 15) * 0.9 - cloud * 0.1 - (isDay ? 0 : 8);
-  return Math.round(clamp(s, 2, 99));
+  return {
+    [feels < 21 ? (feels < 10 ? 'zima' : 'chládek') : (feels > 27 ? 'vedro' : 'teplo')]: Math.abs(feels - 21) * 3.2,
+    'déšť': prob * 0.35 + rain * 12,
+    'vítr': Math.max(0, wind - 15) * 0.9,
+    'mraky': cloud * 0.1,
+    'tma': isDay ? 0 : 8,
+  };
 }
-const moodLabel = (m) => m >= 85 ? 'Paráda' : m >= 70 ? 'Fajn' : m >= 50 ? 'Ujde to' : m >= 30 ? 'Meh' : 'Zůstaň doma';
+function mood(f) {
+  const p = moodParts(f);
+  return Math.round(clamp(100 - Object.values(p).reduce((a, b) => a + b, 0), 2, 99));
+}
+function moodWhy(f) {
+  const [k, v] = Object.entries(moodParts(f)).sort((a, b) => b[1] - a[1])[0];
+  return v < 9 ? 'nic to nekazí' : `kazí to ${k}`;
+}
+const moodLabel = (m) => { const l = LINES['pohoda-popisky'] || []; return l[m >= 85 ? 0 : m >= 70 ? 1 : m >= 50 ? 2 : m >= 30 ? 3 : 4] || ''; };
+const fmtMm = (v) => (Math.round(v * 10) / 10).toString().replace('.', ',');
+
+/* ---------------- Mraq: nálada podle počasí ---------------- */
+function mascotMood(f) {
+  const H = state.data.hourly;
+  const i = Math.round(clamp(f, 0, H.t.length - 1));
+  const ms = at(H.t, f);
+  const k = kind(H.code[i]), code = H.code[i];
+  const feels = at(H.feels, f), wind = at(H.wind, f), gust = at(H.gust, f) || 0, rain = at(H.precip, f), cloud = at(H.cloud, f);
+  const { t, rise, set } = sunPhase(ms);
+  if (k === 'storm') return 'strach';
+  if (t < -0.02 || t > 1.06) return 'spi';
+  if (k === 'snow') return 'snih';
+  if (k === 'rain' && (code >= 61 || rain >= 0.3)) return 'smutek';
+  if (k === 'rain') return 'znechuceni';
+  if (wind >= 32 || gust >= 55) return 'nervy';
+  if (feels >= 29) return 'vztek';
+  if (feels <= 4) return 'zima';
+  if (ms - rise < 2.2 * HOUR && new Date(ms).getUTCHours() < 10) return 'ospaly';
+  if (k === 'fog' || cloud >= 85) return 'nuda';
+  if (state.delta != null && Math.abs(state.delta) < 1 && cloud >= 60) return 'nuda';
+  if ((k === 'clear' || k === 'part') && feels >= 13) return 'radost';
+  return feels < 9 ? 'zima' : 'pohoda';
+}
+function mascotCtx(f) {
+  const H = state.data.hourly, D = state.data.daily, c = state.data.current;
+  const isNow = Math.abs(f - state.nowF) < 0.2;
+  const i = Math.round(clamp(f, 0, H.t.length - 1));
+  const { di } = sunPhase(at(H.t, f));
+  const nextRise = sunPhase(at(H.t, f)).t > 1 ? D.sunrise[di + 1] ?? D.sunrise[di] : D.sunrise[di];
+  const rest = daySummary();
+  return {
+    teplota: Math.round(isNow && c ? c.temperature_2m : at(H.temp, f)),
+    pocitove: Math.round(isNow && c ? c.apparent_temperature : at(H.feels, f)),
+    vitr: Math.round(at(H.wind, f)), narazy: Math.round(at(H.gust, f) || 0),
+    sance: Math.round(Math.max(...[0, 1, 2, 3].map((k) => H.prob[i + k] ?? 0))),
+    mm: fmtMm(rest.sumRain), vychod: hhmm(nextRise), zapad: hhmm(D.sunset[di]),
+    stav: (WMO[isNow && c ? c.weather_code : H.code[i]] || '').toLowerCase(), misto: state.place.name,
+  };
+}
+let mascotT = 0;
+function updateMascot(f, first) {
+  if (!mraq) return;
+  const key = mascotMood(f);
+  if (first) return mraq.set(key, mascotCtx(f), { seed: hashStr(dayKey(nowLocal()) + state.place.name) });
+  clearTimeout(mascotT);
+  mascotT = setTimeout(() => {
+    if (key === mraq.mood) return;
+    const isNow = Math.abs(f - state.nowF) < 0.2;
+    const ms = at(state.data.hourly.t, f);
+    const when = isNow ? '' : `${dayKey(ms) !== dayKey(nowLocal()) ? 'Zítra ' : ''}${hhmm(ms)} · `;
+    mraq.set(key, mascotCtx(f), { prefix: when });
+  }, 260);
+}
 
 function rainSentence() {
   const H = state.data.hourly, i0 = state.i0;
@@ -414,7 +454,7 @@ function renderAt(f) {
   const m = mood(f);
   $('#moodNum').textContent = m;
   $('#moodLabel').textContent = moodLabel(m);
-  $('#moodWhen').textContent = isNow ? 'teď' : hhmm(H.t[i]);
+  $('#moodWhy').textContent = moodWhy(f);
   const k = Math.round((f - state.i0) * 2);
   document.querySelectorAll('#wave i').forEach((el, j) => {
     el.classList.toggle('on', Math.abs(j - k) <= 1);
@@ -424,7 +464,11 @@ function renderAt(f) {
   // déšť
   $('#rainNum').innerHTML = `${Math.round(at(H.prob, f))}<small>%</small>`;
   $('#rainHead').textContent = isNow ? 'šance teď' : `šance v ${hhmm(H.t[i])}`;
-  document.querySelectorAll('#rainDots .col').forEach((el) => el.classList.toggle('sel', +el.dataset.i === i));
+  const mmNow = H.precip[i] ?? 0;
+  $('#rainMm').textContent = mmNow >= 0.1 ? `naprší ~${fmtMm(mmNow)} mm/h` : 'nic nenaprší';
+  document.querySelectorAll('#rainBars .b').forEach((el) => el.classList.toggle('sel', +el.dataset.i === i));
+
+  updateMascot(f);
 
   // slunce
   renderSun(ms);
@@ -468,6 +512,53 @@ function renderSun(ms) {
     $('#lightIcon').innerHTML = icon(0, 0);
     $('#lightLabel').textContent = `${left(nextRise)} do rána`;
   }
+}
+
+/* ---------------- Tahání sluníčka po oblouku = posun času ---------------- */
+function sunTimeFromPoint(x, y) {
+  // najdi nejbližší bod na oblouku nebo na nočních „ocáscích“ a převeď ho na čas
+  const H = state.data.hourly, D = state.data.daily;
+  const paths = [['arc', $('#arc')], ['R', $('#tailR')], ['L', $('#tailL')]];
+  let best = null;
+  for (const [id, p] of paths) {
+    const len = p.getTotalLength();
+    for (let k = 0; k <= 60; k++) {
+      const pt = p.getPointAtLength((len * k) / 60), d = (pt.x - x) ** 2 + (pt.y - y) ** 2;
+      if (!best || d < best.d) best = { id, u: k / 60, d };
+    }
+  }
+  const selMs = at(H.t, state.sel ?? state.nowF);
+  const { di: di0 } = sunPhase(selMs);
+  const toMs = (di) => {
+    const rise = D.sunrise[di], set = D.sunset[di];
+    if (rise == null || set == null) return null;
+    if (best.id === 'arc') return rise + best.u * (set - rise);
+    if (best.id === 'R') { const nr = D.sunrise[di + 1] ?? rise + 24 * HOUR; return set + best.u * 0.5 * (nr - set); }
+    const ps = D.sunset[di - 1] ?? set - 24 * HOUR; return rise - best.u * 0.5 * (rise - ps);
+  };
+  let ms = toMs(di0);
+  const now = nowLocal();
+  if (ms != null && ms < now - 10 * 60e3) { const next = toMs(di0 + 1); if (next != null && (best.id !== 'R' || ms < now - HOUR)) ms = next; }
+  if (ms == null) return null;
+  return clamp((ms - H.t[0]) / HOUR, state.nowF, state.i0 + state.span);
+}
+function wireSunDrag() {
+  const svg = $('#sunSvg'), dot = $('#sunDot');
+  let dragging = false;
+  const move = (e) => {
+    if (!dragging || !state.data) return;
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const f = sunTimeFromPoint(p.x, p.y);
+    if (f != null) { stopPlay(); setScrollFor(f, false); }
+  };
+  dot.addEventListener('pointerdown', (e) => {
+    dragging = true; dot.setPointerCapture(e.pointerId);
+    document.body.classList.add('sundrag'); navigator.vibrate?.(6); e.preventDefault();
+  });
+  dot.addEventListener('pointermove', move);
+  const end = () => { dragging = false; document.body.classList.remove('sundrag'); };
+  dot.addEventListener('pointerup', end); dot.addEventListener('pointercancel', end);
 }
 
 /* ---------------- Časová osa (scrubber) ---------------- */
@@ -523,8 +614,11 @@ function stopPlay() {
   $('#playIco').innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/>';
 }
 
-/* ---------------- Radar (RainViewer, posledních 2 h) ---------------- */
-let map, radarLayers = [], radarFrames = [], radarIdx = 0, radarTimer = null, leafletReady;
+/* ---------------- Radar (RainViewer: jen minulé 2 h) + předpověď pro moje místo ----------------
+   Časová osa: −2 h … teď = skutečný radar na mapě, teď … +3 h = model ICON-D2 po 15 min,
+   ale jen pro vybrané místo (RainViewer od 2026 nowcast nedává). */
+const R = { map: null, marker: null, layers: [], frames: [], host: '', sel: 0, t0: 0, t1: 0, play: 0, shown: -1, loadedAt: 0 };
+let leafletReady;
 function loadLeaflet() {
   if (leafletReady) return leafletReady;
   leafletReady = new Promise((res, rej) => {
@@ -533,68 +627,149 @@ function loadLeaflet() {
     document.head.append(css);
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-    s.onload = res; s.onerror = rej; document.head.append(s);
+    s.onload = res; s.onerror = () => { leafletReady = null; rej(); }; document.head.append(s);
   });
   return leafletReady;
 }
+const placeTime = (epoch) => hhmm(epoch + state.data.offset);
+const future = () => (state.minutely || []).map((x) => ({ t: x.t - state.data.offset, p: x.p }));
+const intensity = (mm15) => { const h = mm15 * 4; return h < 0.1 ? 'sucho' : h < 1 ? 'slabý déšť' : h < 4 ? 'déšť' : h < 10 ? 'silný déšť' : 'liják'; };
+
 async function openRadar() {
-  openSheet('#radarSheet');
-  renderNowcast();
+  const el = $('#radarSheet');
+  el.hidden = false; el.classList.remove('closing');
+  document.body.classList.add('radar-open');
+  $('#radarPlace').textContent = state.place.name;
+  const now = Date.now();
+  R.t0 = now - 2 * HOUR; R.t1 = now + 3 * HOUR;
+  buildTimeline();
+  setRadarTime(now, true);
   try {
     await loadLeaflet();
     const L = window.L;
-    if (!map) {
-      map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 10, minZoom: 4 });
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri · <a href="https://www.rainviewer.com/">RainViewer</a>', maxZoom: 10,
-      }).addTo(map);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 10, zIndex: 8, pane: 'overlayPane',
-      }).addTo(map);
+    if (!R.map) {
+      R.map = L.map('map', { zoomControl: false, attributionControl: true, maxZoom: 10, minZoom: 3, zoomSnap: 0.5 });
+      R.map.createPane('labels'); R.map.getPane('labels').style.zIndex = 450; R.map.getPane('labels').style.pointerEvents = 'none';
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri · <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Weather data by RainViewer</a>', maxZoom: 10,
+      }).addTo(R.map);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 10, pane: 'labels', opacity: 0.85,
+      }).addTo(R.map);
+      R.marker = L.marker([0, 0], { icon: L.divIcon({ className: 'me', html: '<i></i><b></b>', iconSize: [22, 22] }), interactive: false, zIndexOffset: 1000 }).addTo(R.map);
     }
-    map.setView([state.place.lat, state.place.lon], 7);
-    L.circleMarker([state.place.lat, state.place.lon], { radius: 6, color: '#141414', weight: 2, fillColor: '#ff6b3d', fillOpacity: 1 }).addTo(map);
-    setTimeout(() => map.invalidateSize(), 350);
+    R.map.setView([state.place.lat, state.place.lon], 7, { animate: false });
+    R.marker.setLatLng([state.place.lat, state.place.lon]);
+    setTimeout(() => R.map.invalidateSize(), 60);
 
-    const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-    radarLayers.forEach((l) => map.removeLayer(l));
-    radarFrames = j.radar.past;
-    radarLayers = radarFrames.map((fr) => L.tileLayer(`${j.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
-      opacity: 0, maxNativeZoom: 7, maxZoom: 10, tileSize: 256, zIndex: 5,
-    }).addTo(map));
-    const rg = $('#radarRange'); rg.max = radarFrames.length - 1; rg.value = rg.max;
-    showRadarFrame(radarFrames.length - 1);
+    if (Date.now() - R.loadedAt > 4 * 60e3 || !R.frames.length) {
+      const j = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
+      R.layers.forEach((l) => R.map.removeLayer(l));
+      R.host = j.host; R.frames = [...(j.radar.past || []), ...(j.radar.nowcast || [])]; // nowcast RainViewer od 2026 nedává, ale kdyby se vrátil, použije se R.loadedAt = Date.now(); R.shown = -1;
+      R.layers = R.frames.map((fr) => L.tileLayer(`${R.host}${fr.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+        opacity: 0, maxNativeZoom: 7, maxZoom: 10, tileSize: 256, zIndex: 5, className: 'rv',
+      }).addTo(R.map));
+      if (R.frames.length) R.t0 = Math.min(R.t0, R.frames[0].time * 1000);
+      buildTimeline();
+    }
+    setRadarTime(R.sel || Date.now(), true);
     playRadar(true);
-  } catch (e) {
-    $('#radarTime').textContent = 'radar nedostupný';
+  } catch {
+    $('#radarRel').textContent = 'mapa se nenačetla – jsi online?';
   }
 }
-function showRadarFrame(i) {
-  radarIdx = i;
-  radarLayers.forEach((l, k) => l.setOpacity(k === i ? 0.75 : 0));
-  const fr = radarFrames[i]; if (!fr) return;
-  const mins = Math.round((Date.now() / 1000 - fr.time) / 60);
-  $('#radarTime').textContent = mins < 8 ? 'teď' : `před ${mins} min`;
-  $('#radarRange').value = i;
+function closeRadar() {
+  const el = $('#radarSheet'); el.classList.add('closing');
+  stopRadar();
+  document.body.classList.remove('radar-open');
+  setTimeout(() => { el.hidden = true; el.classList.remove('closing'); }, 260);
+}
+const xOf = (t) => clamp((t - R.t0) / (R.t1 - R.t0), 0, 1) * 100;
+function buildTimeline() {
+  const now = Date.now();
+  $('#tl').style.setProperty('--now', `${xOf(now)}%`);
+  $('#tlPast').innerHTML = R.frames.map((fr) => `<i style="left:${xOf(fr.time * 1000)}%"></i>`).join('');
+  const fut = future();
+  const max = Math.max(0.5, ...fut.map((x) => x.p));
+  $('#tlFuture').innerHTML = fut.map((x) => `<i class="${x.p < 0.02 ? 'dry' : ''}" style="left:${xOf(x.t)}%;width:${xOf(x.t + 15 * 60e3) - xOf(x.t)}%;height:${x.p < 0.02 ? 3 : 18 + (x.p / max) * 82}%"></i>`).join('');
+  let lab = '';
+  const first = Math.ceil((R.t0 + state.data.offset) / HOUR) * HOUR - state.data.offset;
+  for (let t = first; t <= R.t1; t += HOUR) lab += `<span style="left:${xOf(t)}%">${placeTime(t)}</span>`;
+  $('#tlLabels').innerHTML = lab;
+}
+function setRadarTime(t, force) {
+  R.sel = clamp(t, R.t0, R.t1);
+  $('#tlCursor').style.left = `${xOf(R.sel)}%`;
+  const now = Date.now();
+  const lastFrame = R.frames.length ? R.frames[R.frames.length - 1].time * 1000 : now;
+  const isFuture = R.sel > lastFrame + 6 * 60e3;
+  // snímek radaru: nejbližší starší (v budoucnu drží poslední, ztlumený)
+  let idx = -1;
+  for (let k = 0; k < R.frames.length; k++) if (R.frames[k].time * 1000 <= R.sel + 5 * 60e3) idx = k;
+  if (idx !== R.shown || force) {
+    R.layers.forEach((l, k) => l.setOpacity(k === idx ? (isFuture ? 0.35 : 0.8) : 0));
+    R.shown = idx;
+  } else if (idx >= 0) R.layers[idx]?.setOpacity(isFuture ? 0.35 : 0.8);
+  $('#radarSheet').classList.toggle('future', isFuture);
+  $('#radarBadge').textContent = isFuture || R.sel > now + 5 * 60e3 ? 'předpověď' : 'radar';
+  const mins = Math.round((R.sel - now) / 60e3);
+  if (isFuture) {
+    const fut = future();
+    const slot = fut.filter((x) => x.t <= R.sel).pop() || fut[0];
+    $('#radarTime').textContent = placeTime(R.sel);
+    $('#radarRel').textContent = `za ${mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`}`;
+    $('#nowcastNote').textContent = slot
+      ? `U tebe ${slot.p >= 0.02 ? `${intensity(slot.p)} · ${fmtMm(slot.p)} mm za 15 min` : 'sucho'}. Mapa ukazuje poslední radar, budoucnost jen pro tvoje místo.`
+      : 'Předpověď po 15 minutách teď není k dispozici.';
+    const p = slot?.p || 0;
+    R.marker?.getElement()?.style.setProperty('--wet', p >= 0.02 ? clamp(0.35 + p, 0, 1) : 0);
+  } else {
+    const shownT = idx >= 0 ? R.frames[idx].time * 1000 : R.sel;
+    const ago = Math.round((now - shownT) / 60e3);
+    $('#radarTime').textContent = placeTime(shownT);
+    $('#radarRel').textContent = ago < 6 ? 'teď' : `před ${ago} min`;
+    $('#nowcastNote').textContent = radarSummary();
+    R.marker?.getElement()?.style.setProperty('--wet', 0);
+  }
+}
+function radarSummary() {
+  const fut = future();
+  if (!fut.length) return 'Modře je, kde pršelo. Posuň osu doprava a uvidíš, co čeká tebe.';
+  const total = fut.reduce((a, x) => a + x.p, 0);
+  return total < 0.1 ? `Další 3 hodiny u tebe nic nespadne. ${rainSentence()}` : `${rainSentence()} Do ${placeTime(fut[fut.length - 1].t)} asi ${fmtMm(total)} mm.`;
 }
 function playRadar(force) {
-  if (radarTimer && !force) { clearInterval(radarTimer); radarTimer = null; return; }
-  clearInterval(radarTimer);
-  let i = 0;
-  radarTimer = setInterval(() => {
-    showRadarFrame(i);
-    i = i >= radarFrames.length - 1 ? 0 : i + 1;
-  }, 550);
+  if (R.play && !force) return stopRadar();
+  stopRadar();
+  const D = 9000, hold = 900;
+  let start = performance.now() - ((R.sel - R.t0) / (R.t1 - R.t0)) * D;
+  if (R.sel >= R.t1 - 60e3) start = performance.now();
+  $('#radarPlayIco').innerHTML = '<path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor" stroke="none"/>';
+  const step = (now) => {
+    let k = (now - start) / D;
+    if (k > 1 + hold / D) { start = now; k = 0; }
+    setRadarTime(R.t0 + clamp(k, 0, 1) * (R.t1 - R.t0));
+    R.play = requestAnimationFrame(step);
+  };
+  R.play = requestAnimationFrame(step);
 }
-function renderNowcast() {
-  const m = state.minutely;
-  if (!m?.length) { $('#nowcast').innerHTML = ''; $('#nowcastNote').textContent = 'Krátkodobá data teď nejsou k dispozici.'; return; }
-  const max = Math.max(1.5, ...m.map((x) => x.p));
-  $('#nowcast').innerHTML = m.map((x, k) => `<i style="--d:${k};height:${Math.max(3, (x.p / max) * 100)}%" class="${x.p < 0.05 ? 'zero' : ''}" title="${hhmm(x.t)}: ${x.p} mm"></i>`).join('');
-  const total = m.reduce((a, x) => a + x.p, 0);
-  $('#nowcastNote').textContent = total < 0.1
-    ? `Do ${hhmm(m[m.length - 1].t)} nic nespadne. Klid.`
-    : `${rainSentence()} Celkem asi ${total.toFixed(1).replace('.', ',')} mm.`;
+function stopRadar() {
+  if (R.play) cancelAnimationFrame(R.play);
+  R.play = 0;
+  $('#radarPlayIco').innerHTML = '<path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/>';
+}
+function wireRadar() {
+  const tl = $('#tl');
+  let drag = false;
+  const at = (e) => { const r = tl.getBoundingClientRect(); return R.t0 + clamp((e.clientX - r.left) / r.width, 0, 1) * (R.t1 - R.t0); };
+  tl.addEventListener('pointerdown', (e) => { drag = true; tl.setPointerCapture(e.pointerId); stopRadar(); setRadarTime(at(e)); });
+  tl.addEventListener('pointermove', (e) => { if (drag) setRadarTime(at(e)); });
+  tl.addEventListener('pointerup', () => { drag = false; navigator.vibrate?.(4); });
+  tl.addEventListener('pointercancel', () => { drag = false; });
+  $('#radarPlay').onclick = () => playRadar(false);
+  $('#radarClose').onclick = closeRadar;
+  $('#radarLocate').onclick = () => R.map?.flyTo([state.place.lat, state.place.lon], 8, { duration: 0.8 });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#radarSheet').hidden) closeRadar(); });
 }
 
 /* ---------------- Sheets ---------------- */
@@ -602,7 +777,6 @@ function openSheet(sel) { const s = $(sel); s.hidden = false; s.classList.remove
 function closeSheet(sel) {
   const s = $(sel); s.classList.add('closing');
   setTimeout(() => { s.hidden = true; s.classList.remove('closing'); }, 240);
-  if (sel === '#radarSheet') { clearInterval(radarTimer); radarTimer = null; }
 }
 let searchT;
 async function search(q) {
@@ -652,6 +826,7 @@ function ingest(raw, mraw) {
   buildDial();
   setScrollFor(state.nowF, false);
   renderAt(state.nowF);
+  updateMascot(state.nowF, true);
   if (!document.body.classList.contains('ready')) requestAnimationFrame(() => document.body.classList.add('ready'));
 }
 
@@ -667,35 +842,38 @@ function wire() {
   $('#geoBtn').onclick = async () => {
     $('#geoBtn').textContent = '◎ Hledám…';
     const p = await useMyLocation(false);
-    $('#geoBtn').textContent = '◎ Použít moji polohu';
+    $('#geoBtn').textContent = '◎ Tam, kde jsem (podle polohy)';
     if (p) { closeSheet('#placeSheet'); setPlace(p); }
   };
   $('#radarBtn').onclick = openRadar;
   $('#radarCard').onclick = openRadar;
-  $('#radarClose').onclick = () => closeSheet('#radarSheet');
-  $('#radarPlay').onclick = () => playRadar(false);
-  $('#radarRange').oninput = (e) => { clearInterval(radarTimer); radarTimer = null; showRadarFrame(+e.target.value); };
+  wireRadar();
   document.querySelectorAll('.sheet').forEach((s) => s.addEventListener('click', (e) => { if (e.target === s) closeSheet('#' + s.id); }));
   // tap na sloupec deště → skoč na ten čas
-  $('#rainDots').addEventListener('click', (e) => { const c = e.target.closest('.col'); if (c) setScrollFor(+c.dataset.i, true); });
+  $('#rainBars').addEventListener('click', (e) => { const c = e.target.closest('.b'); if (c) setScrollFor(+c.dataset.i, true); });
+  $('#wave').addEventListener('click', (e) => { const w = e.target.closest('i'); if (w) setScrollFor(state.i0 + +w.dataset.k / 2, true); });
+  $('#moodBest').onclick = () => state.best && setScrollFor(state.best.f, true);
+  wireSunDrag();
   // při návratu do appky obnov, pokud jsou data starší než 10 min
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && state.place && Date.now() - (state.lastFetch || 0) > 10 * 60e3) refresh();
+    if (document.visibilityState !== 'visible' || !state.place || Date.now() - (state.lastFetch || 0) < 10 * 60e3) return;
+    if (state.place.auto) useMyLocation(true).then((p) => (p ? setPlace(p) : refresh())); else refresh();
   });
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (state.data) { buildDial(); setScrollFor(state.sel || state.nowF, false); } }, 150); });
 }
 
+let mraq = null;
 async function boot() {
+  mraq = createMraq();
   wire();
+  await loadLines();
   const saved = load();
   // 1) okamžitě ukaž poslední data z cache
   if (saved.place && saved.cache) { state.place = saved.place; try { ingest(saved.cache.raw, saved.cache.mraw); } catch {} }
-  // 2) pak zjisti polohu (pokud uživatel nevybral město ručně)
-  if (!saved.place || saved.place.auto) {
-    const p = await useMyLocation(true);
-    state.place = p || saved.place || DEFAULT_PLACE;
-    save({ place: state.place });
-  } else state.place = saved.place;
+  // 2) poloha se zjišťuje vždycky znova (ručně vybrané město platí jen do zavření appky)
+  const p = await useMyLocation(true);
+  state.place = p || saved.place || DEFAULT_PLACE;
+  save({ place: state.place });
   await refresh();
 }
 

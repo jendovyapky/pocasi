@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Líné počasí</title>
-  <meta name="description" content="Počasí pro líné. Otevřeš, víš, co si vzít na sebe.">
+  <title>Mraq</title>
+  <meta name="description" content="Mraq – počasí pro líné. Otevřeš, víš, co si vzít na sebe.">
   <meta name="theme-color" content="#f6a38a">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/mraq.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Líno">
+  <meta name="apple-mobile-web-app-title" content="Mraq">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800;900&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap&subset=latin-ext" rel="stylesheet">
@@ -39,16 +40,39 @@
       </div>
     </header>
 
+    <section class="buddy reveal" id="buddy">
+      <button class="orb" id="orb" aria-label="Mraq – klepni na mě">
+        <span class="orb__glow"></span>
+        <span class="orb__ball"></span>
+        <svg class="orb__face" viewBox="0 0 120 120" aria-hidden="true">
+          <ellipse class="orb__blush" id="blushL" cx="36" cy="66" rx="9" ry="5"/>
+          <ellipse class="orb__blush" id="blushR" cx="84" cy="66" rx="9" ry="5"/>
+          <path id="eyeL" class="orb__eye"/>
+          <path id="eyeR" class="orb__eye"/>
+          <path id="lashL" class="orb__lash"/>
+          <path id="lashR" class="orb__lash"/>
+          <circle id="sparkL" class="orb__spark" r="2.4"/>
+          <circle id="sparkR" class="orb__spark" r="2.4"/>
+          <path id="mouth" class="orb__mouth"/>
+          <ellipse id="mouthO" class="orb__mouthO"/>
+        </svg>
+        <span class="orb__z" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span>
+      </button>
+      <div class="say">
+        <p class="say__who"><b>Mraq</b> <span id="moodName">…</span></p>
+        <p class="say__text" id="say" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section class="lazy reveal" id="lazy">
       <p class="lazy__line">Dnes je</p>
       <p class="lazy__big" id="lazyBig">…</p>
       <p class="lazy__line" id="lazyEnd">než včera</p>
-      <p class="lazy__joke" id="lazyJoke"></p>
       <div class="wear" id="wear"></div>
     </section>
 
     <section class="hero reveal">
-      <div class="temp" id="temp"><span id="tempNum">--</span><span class="temp__deg">°</span></div>
+      <div class="temp" id="temp"><span id="tempNum">--</span><span class="temp__deg" aria-hidden="true">°</span></div>
       <p class="hero__cond" id="cond">&nbsp;</p>
       <p class="hero__sub" id="condSub">&nbsp;</p>
     </section>
@@ -64,6 +88,7 @@
         <line id="sunStem" x1="170" y1="96" x2="170" y2="12" class="sun__stem"/>
         <circle id="sunStemPin" cx="170" cy="96" r="3.2" class="sun__pin"/>
         <g id="sunDot">
+          <circle r="26" class="sun__hit"/>
           <circle r="15" class="sun__halo"/>
           <circle r="5.5" class="sun__core"/>
         </g>
@@ -77,16 +102,20 @@
 
     <section class="cards reveal">
       <article class="card" id="moodCard">
-        <h3>Pohoda<span>venku</span></h3>
+        <h3>Pohoda venku<span>0–100, víc = líp</span></h3>
         <div class="card__num" id="moodNum">--</div>
+        <p class="card__why" id="moodWhy">&nbsp;</p>
         <div class="wave" id="wave"></div>
-        <div class="card__foot"><span id="moodLabel">&nbsp;</span><span id="moodWhen">teď</span></div>
+        <div class="card__axis"><span>teď</span><span id="waveMid">+12 h</span><span>+24 h</span></div>
+        <div class="card__foot"><span id="moodLabel">&nbsp;</span><span id="moodBest">&nbsp;</span></div>
       </article>
       <article class="card" id="rainCard">
-        <h3>Déšť<span id="rainHead">šance</span></h3>
+        <h3>Déšť<span id="rainHead">šance teď</span></h3>
         <div class="card__num" id="rainNum">--<small>%</small></div>
-        <div class="dots" id="rainDots"></div>
-        <div class="card__foot"><span id="rainFrom">teď</span><span id="rainTo">+12 h</span></div>
+        <p class="card__why" id="rainMm">&nbsp;</p>
+        <div class="bars" id="rainBars"></div>
+        <div class="card__axis" id="rainAxis"></div>
+        <div class="card__foot"><span><i class="key key--wet"></i>naprší</span><span><i class="key"></i>jen šance</span></div>
       </article>
     </section>
 
@@ -97,7 +126,7 @@
     <button class="radarcard reveal" id="radarCard">
       <div>
         <h3>Radar</h3>
-        <p id="radarTeaser">Posledních 120 minut srážek nad tebou</p>
+        <p id="radarTeaser">Kde pršelo poslední 2 h a co přijde k tobě</p>
       </div>
       <span class="radarcard__arrow">→</span>
     </button>
@@ -105,7 +134,7 @@
     <section class="week reveal" id="week" aria-label="Další dny"></section>
 
     <footer class="foot reveal">
-      Předpověď <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (ICON-D2, ECMWF) ·
+      <b>Mraq</b> · Předpověď <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (ICON-D2, ECMWF) ·
       Radar <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Weather data by RainViewer</a><br>
       <span id="updated"></span>
     </footer>
@@ -130,30 +159,39 @@
   <div class="sheet" id="placeSheet" hidden>
     <div class="sheet__panel">
       <div class="sheet__grab"></div>
-      <h2>Kde jsi?</h2>
+      <h2>Jiné místo</h2>
       <input id="searchInput" type="search" placeholder="Napiš město…" autocomplete="off" enterkeyhint="search">
-      <button class="sheet__geo" id="geoBtn">◎ Použít moji polohu</button>
+      <button class="sheet__geo" id="geoBtn">◎ Tam, kde jsem (podle polohy)</button>
       <ul class="results" id="results"></ul>
     </div>
   </div>
 
-  <!-- Radar -->
-  <div class="sheet sheet--radar" id="radarSheet" hidden>
-    <div class="sheet__panel">
-      <div class="sheet__grab"></div>
-      <div class="radar__head">
-        <h2>Radar</h2>
-        <button class="iconbtn" id="radarClose" aria-label="Zavřít"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <!-- Radar (celá obrazovka, ve stylu RainVieweru) -->
+  <div class="radar" id="radarSheet" hidden>
+    <div class="radar__map" id="map"></div>
+    <div class="radar__top">
+      <button class="rbtn" id="radarClose" aria-label="Zavřít"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="radar__title"><b>Radar srážek</b><span id="radarPlace">&nbsp;</span></div>
+      <button class="rbtn" id="radarLocate" aria-label="Na moje místo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg></button>
+    </div>
+    <div class="radar__legend" aria-label="Legenda"><span>slabý</span><i></i><span>silný</span></div>
+    <div class="radar__panel">
+      <div class="radar__status">
+        <span class="radar__badge" id="radarBadge">radar</span>
+        <b id="radarTime">--:--</b>
+        <span id="radarRel">&nbsp;</span>
       </div>
-      <div class="radar__map" id="map"></div>
-      <div class="radar__bar">
-        <button class="dock__btn" id="radarPlay" aria-label="Přehrát radar"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg></button>
-        <input type="range" id="radarRange" min="0" max="0" value="0">
-        <span id="radarTime">--:--</span>
+      <div class="radar__tlrow">
+        <button class="rbtn rbtn--play" id="radarPlay" aria-label="Přehrát"><svg viewBox="0 0 24 24" id="radarPlayIco"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg></button>
+        <div class="tl" id="tl">
+          <div class="tl__past" id="tlPast"></div>
+          <div class="tl__future" id="tlFuture"></div>
+          <div class="tl__now"><span>teď</span></div>
+          <div class="tl__cursor" id="tlCursor"></div>
+          <div class="tl__labels" id="tlLabels"></div>
+        </div>
       </div>
-      <h3 class="radar__sub">Příští 3 hodiny <span>model ICON-D2, po 15 min</span></h3>
-      <div class="nowcast" id="nowcast"></div>
-      <p class="radar__note" id="nowcastNote"></p>
+      <p class="radar__note" id="nowcastNote">&nbsp;</p>
     </div>
   </div>
 
