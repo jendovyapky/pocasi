@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jendovy apky</title>
+<meta name="description" content="Jendovy apky – Mraq a další.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/mraq.png">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap&subset=latin-ext" rel="stylesheet">
+<style>
+:root { --ink: #fff; --mut: rgba(255,255,255,.72); --glass: rgba(255,255,255,.16); --line: rgba(255,255,255,.28); --ease: cubic-bezier(.2,.8,.2,1); }
+:root.light-ink { --ink: #15161c; --mut: rgba(21,22,28,.66); --glass: rgba(255,255,255,.38); --line: rgba(255,255,255,.6); }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+body { font-family: Geist, system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; transition: color .6s; }
+canvas#sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.ui { position: fixed; inset: 0; pointer-events: none; padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
+.ui a, .ui .app { pointer-events: auto; }
+a { color: inherit; text-decoration: none; }
+.hidden { display: none !important; }
+
+.head { margin: 3vh 0 0; text-align: center; font: 900 clamp(38px, 12vw, 76px)/1 Doto; letter-spacing: .02em; }
+.dock { position: absolute; left: 50%; bottom: max(30px, calc(env(safe-area-inset-bottom) + 14px)); transform: translateX(-50%); display: flex; gap: 26px; padding: 16px 26px 12px; border-radius: 30px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3); }
+.app { display: flex; flex-direction: column; align-items: center; gap: 7px; width: 74px; font: 500 12.5px Geist; transition: transform .35s var(--ease); -webkit-tap-highlight-color: transparent; }
+.app:active { transform: scale(.92); }
+.ico { width: 64px; height: 64px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 24px rgba(0,0,0,.22); position: relative; transition: transform .35s var(--ease), box-shadow .35s; }
+.ico img { width: 100%; height: 100%; display: block; }
+.app:hover .ico { transform: translateY(-4px) rotate(-3deg); box-shadow: 0 16px 30px rgba(0,0,0,.28); }
+.soon { color: var(--mut); cursor: default; }
+.soon .ico { background: rgba(255,255,255,.08); border: 1.5px dashed var(--line); box-shadow: none; display: grid; place-items: center; }
+.soon .ico svg { width: 34px; height: 34px; }
+.soon:hover .ico { transform: rotate(4deg); }
+
+/* bublina Mraqa */
+.say { position: fixed; z-index: 3; padding: 9px 13px; border-radius: 16px; background: rgba(20,21,30,.8); color: #fff; font: 500 13.5px Geist; max-width: 230px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .3s, transform .3s var(--ease); pointer-events: none; }
+.say.on { opacity: 1; transform: none; }
+
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="say" id="say" aria-live="polite"></div>
+
+<main class="ui" id="ui">
+  <h1 class="head">JENDOVY APKY</h1>
+  <nav class="dock" aria-label="Appky">
+    <a class="app" data-app="mraq" href="https://mraq.jendovyapky.eu"><div class="ico"><img alt="" src="icons/mraq.png"></div>Mraq</a>
+    <div class="app soon" data-app="soon" aria-label="Další appka brzy"><div class="ico"><svg viewBox="0 0 32 42" fill="currentColor" aria-hidden="true"><circle cx="10" cy="2" r="2.3"/><circle cx="16" cy="2" r="2.3"/><circle cx="22" cy="2" r="2.3"/><circle cx="4" cy="8" r="2.3"/><circle cx="28" cy="8" r="2.3"/><circle cx="28" cy="14" r="2.3"/><circle cx="16" cy="20" r="2.3"/><circle cx="22" cy="20" r="2.3"/><circle cx="16" cy="26" r="2.3"/><circle cx="16" cy="38" r="2.3"/></svg></div>Brzy</div>
+  </nav>
+</main>
+
+
+<script>
+/* ===== pomocné ===== */
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixc = (a, b, t) => a.map((v, i) => Math.round(lerp(v, b[i], t)));
+const rgba = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const lum = (c) => (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255;
+
+/* ===== obloha podle denní doby (stejné barvy jako Mraq) ===== */
+const PAL = {
+  night: ['#0c1030', '#1d2456', '#33307a', '#5a54b8'],
+  dawn: ['#6f7bd0', '#f3a6a0', '#ffb36b', '#ff8a3d'],
+  morning: ['#9cc0ff', '#ffe3c4', '#ffc98a', '#fff1a8'],
+  day: ['#6fb5ff', '#b9f0ff', '#c4f59a', '#8be36b'],
+  golden: ['#f9c4a8', '#ffb86b', '#ff8a3d', '#ffd27a'],
+  dusk: ['#7f8de0', '#f6a38a', '#ff8a3d', '#ffc06b'],
+};
+function todNow() { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; return h < 6 || h >= 20.5 ? 'night' : h < 7.5 ? 'dawn' : h < 10 ? 'morning' : h < 16 ? 'day' : h < 18 ? 'golden' : 'dusk'; }
+
+/* ===== scéna ===== */
+const cv = $('#sky'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function size() { DPR = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; }
+size(); addEventListener('resize', size);
+
+const SW = 400, SH = 230;
+function sprite(cloud, seed) {
+  const c = document.createElement('canvas'); c.width = SW; c.height = SH; const x = c.getContext('2d');
+  let s = seed; const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  const [c0, c1, c2] = cloud, blobs = [];
+  for (let i = 0; i < 6; i++) blobs.push([70 + i * 52 + rnd() * 20, 150 - rnd() * 20, 42 + rnd() * 22]);
+  for (let i = 0; i < 4; i++) blobs.push([120 + i * 55 + rnd() * 25, 112 - rnd() * 25, 40 + rnd() * 26]);
+  blobs.push([175 + rnd() * 50, 85 - rnd() * 15, 48 + rnd() * 18]);
+  for (const [bx, by, r] of blobs) {
+    const gr = x.createRadialGradient(bx - r * .3, by - r * .45, r * .05, bx, by, r);
+    gr.addColorStop(0, rgba(c0, 1)); gr.addColorStop(.62, rgba(c1, .95)); gr.addColorStop(.85, rgba(c2, .55)); gr.addColorStop(1, rgba(c2, 0));
+    x.fillStyle = gr; x.beginPath(); x.arc(bx, by, r, 0, 7); x.fill();
+  }
+  x.globalCompositeOperation = 'source-atop';
+  const sh = x.createLinearGradient(0, 110, 0, 200); sh.addColorStop(0, rgba(c2, 0)); sh.addColorStop(1, rgba(c2, .55));
+  x.fillStyle = sh; x.fillRect(0, 0, SW, SH);
+  x.globalCompositeOperation = 'destination-in';
+  const fade = x.createLinearGradient(0, 150, 0, 190); fade.addColorStop(0, '#000'); fade.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = fade; x.fillRect(0, 0, SW, SH);
+  const blurred = (f) => { const b = document.createElement('canvas'); b.width = Math.ceil(SW / f); b.height = Math.ceil(SH / f); b.getContext('2d').drawImage(c, 0, 0, b.width, b.height); return b; };
+  return [c, blurred(5), blurred(14)];
+}
+
+let tod = 'auto', pal, sky, glow, dark, cloud, sprites;
+function setTod(t) {
+  tod = t; const k = t === 'auto' ? todNow() : t;
+  pal = PAL[k]; sky = pal.slice(0, 3).map(hex); glow = hex(pal[3]);
+  dark = (lum(sky[0]) + lum(sky[1])) / 2 < 0.42;
+  cloud = dark ? [[182, 185, 236], [144, 149, 210], [102, 106, 168]] : [[255, 253, 248], mixc([243, 239, 236], sky[0], .12), mixc([218, 210, 214], sky[1], .25)];
+  sprites = [1, 2, 3].map((s) => sprite(cloud, s * 1777 + 11));
+  document.documentElement.classList.toggle('light-ink', !dark && lum(sky[1]) > .78);
+}
+
+/* mraky ve 3 hloubkách: [x, y, z, velikost, sprite, rychlost větru] */
+let s0 = 7; const R = () => ((s0 = (s0 * 9301 + 49297) % 233280) / 233280);
+const PUFFS = [];
+for (let i = 0; i < 9; i++) PUFFS.push([(R() - .5) * 4.4, .25 + R() * .9, 2.4 + R() * 1.4, .8 + R() * .9, i % 3, .004 + R() * .004]); // daleko – moře mraků
+for (let i = 0; i < 3; i++) PUFFS.push([(R() - .5) * 3.4, -.9 + R() * .4, 2.6 + R() * 1, .6 + R() * .5, i % 3, .006]);   // daleko nahoře
+for (let i = 0; i < 5; i++) PUFFS.push([(i % 2 ? 1 : -1) * (.32 + R() * .2), -.55 + R() * 1.3, .65 + R() * .3, .38 + R() * .2, i % 3, .01 + R() * .006]); // střední
+for (let i = 0; i < 3; i++) PUFFS.push([(i % 2 ? 1 : -1) * (.24 + R() * .1), (i === 2 ? .38 : -.36), .3 + R() * .1, .55 + R() * .2, i % 3, .016]); // u kamery
+const STARS = Array.from({ length: 90 }, (_, i) => [(R() - .5) * 5, (R() - .5) * 6, 4 + R(), .3 + R() * .7, R() * 6.28]);
+
+/* ===== Mraq ===== */
+const BODY = new Path2D('M168 366 C 116 366 86 330 92 292 C 97 258 124 238 152 238 C 150 184 196 140 252 140 C 304 140 340 172 350 214 C 392 214 426 248 424 292 C 422 336 388 366 344 366 Z');
+const TAIL = new Path2D('M322 338 C 344 380 372 404 408 402 C 418 401 426 396 430 388');
+const MC = [258, 272], EYES = [[205, 290], [305, 290]], PITCH = 13.5, DOT = 5.6;
+// polohy Mraqa podle varianty (střed v podílu obrazovky, šířka v podílu kratší strany)
+const LAYOUT = { x: .5, y: .45, w: .6 };
+
+// stav očí (plynule se dotahuje k cíli)
+const E = { lx: 0, ly: 0, open: 1, squint: .5, happy: 0, wide: 0, hop: 0 };
+const T = { lx: 0, ly: 0, open: 1, squint: .5, happy: 0, wide: 0 };
+let blinkT = 0, nextBlink = 2000, idleT = 0, nextIdle = 2500, mood = 'otráveně', moodUntil = 0, lastMove = -1e9;
+const pointer = { x: null, y: null, nx: 0, ny: 0, tnx: 0, tny: 0, hover: null };
+
+function mraqRect() {
+  const L = LAYOUT, s = Math.min(W, H) * L.w * (W > 700 ? .75 : 1);
+  return { cx: W * L.x + cam.x * -W * .9, cy: H * L.y + cam.y * -H * .5, s };
+}
+function eyeDots(ex, ey, w, h, happy) { // vrací, které tečky svítí
+  const out = [];
+  for (let gy = -5; gy <= 5; gy++) for (let gx = -5; gx <= 5; gx++) {
+    const x = ex + gx * PITCH, y = ey + gy * PITCH, cx0 = 0, rx = x - ex, ry = y - ey;
+    let on;
+    if (h <= 5) on = Math.abs(ry) < 7 && Math.abs(rx) < w / 2;
+    else {
+      const dx = Math.max(0, Math.abs(rx) - (w / 2 - 14)), dy = Math.max(0, Math.abs(ry) - (h / 2 - 14));
+      on = Math.hypot(dx, dy) <= 14;
+      if (on && happy > .02) { const d = Math.hypot(rx, ry - h * .55); if (d < h * .62 * happy + 2) on = false; } // ∩ – spodek se vykrojí
+    }
+    if (on) out.push([x, y]);
+  }
+  return out;
+}
+function drawMraq(t) {
+  const r = mraqRect(), k = r.s / 390;
+  const bob = Math.sin(t / 900) * 6 - E.hop * 26;
+  g.save();
+  g.translate(r.cx, r.cy + bob);
+  const sq = 1 + E.hop * .06;
+  g.scale(k / sq, k * sq);
+  g.translate(-MC[0], -MC[1]);
+  const bg = g.createRadialGradient(210, 200, 0, 210, 200, 260);
+  bg.addColorStop(0, rgba(cloud[0])); bg.addColorStop(.6, rgba(cloud[1])); bg.addColorStop(1, rgba(cloud[2]));
+  g.shadowColor = 'rgba(0,0,0,.2)'; g.shadowBlur = 30 * k; g.shadowOffsetY = 18 * k;
+  g.fillStyle = bg; g.fill(BODY);
+  g.strokeStyle = bg; g.lineWidth = 46; g.lineCap = 'round'; g.stroke(TAIL);
+  g.shadowColor = 'transparent';
+  g.fillStyle = dark ? '#10112a' : '#141414';
+  EYES.forEach(([cx, cy], i) => {
+    const w = 62 * (1 + E.wide * .14), hh = 56 * (1 + E.wide * .2) * E.open * (i === 1 ? 1 - E.squint * .45 : 1);
+    const ex = cx + E.lx, ey = cy + E.ly + (56 - hh) / 2;
+    for (const [x, y] of eyeDots(ex, ey, w, hh, E.happy)) { g.beginPath(); g.arc(x, y, DOT, 0, 7); g.fill(); }
+  });
+  g.restore();
+}
+
+/* chování: sleduje prst/myš, sám od sebe se rozhlíží, mrká, občas udělá výraz */
+const LINES = { mraq: 'Klikni. Řeknu ti, co si vzít na sebe.', soon: 'Jak brzo? Brzo.', poke: 'Hej, co zkoušíš?' };
+let sayT;
+function say(text) {
+  const b = $('#say'); b.textContent = text; b.classList.add('on');
+  const r = mraqRect();
+  b.style.left = `${clamp(r.cx + r.s * .16, 10, W - 240)}px`; b.style.top = `${clamp(r.cy - r.s * .52, 70, H - 90)}px`;
+  clearTimeout(sayT); sayT = setTimeout(() => b.classList.remove('on'), 2600);
+}
+
+function behave(t, dt) {
+  const r = mraqRect(), k = r.s / 390;
+  // cíl pohledu: prst/myš, nebo hovernutá ikonka, jinak volné rozhlížení
+  let tx = null, ty = null;
+  if (pointer.hover) { const b = pointer.hover.getBoundingClientRect(); tx = b.left + b.width / 2; ty = b.top + b.height / 2; }
+  else if (t - lastMove < 3500 && pointer.x != null) { tx = pointer.x; ty = pointer.y; }
+  if (tx != null) {
+    const dx = (tx - r.cx) / (k * 260), dy = (ty - (r.cy + 20 * k)) / (k * 260);
+    const d = Math.hypot(dx, dy) || 1, m = Math.min(1, d);
+    T.lx = dx / d * m * 34; T.ly = dy / d * m * 20;
+  } else if (t > nextIdle) { // volný pohled
+    const roll = Math.random();
+    if (roll < .5) { T.lx = (Math.random() - .5) * 60; T.ly = (Math.random() - .5) * 24; }
+    else if (roll < .7) { T.lx = 0; T.ly = 0; }
+    else if (roll < .85) { mood = 'roll'; moodUntil = t + 1300; }
+    else { mood = 'happy'; moodUntil = t + 1400; }
+    nextIdle = t + 1200 + Math.random() * 2600;
+  }
+  if (mood === 'roll' && t < moodUntil) { const p = 1 - (moodUntil - t) / 1300; T.lx = Math.cos(Math.PI * (1 - p)) * 30; T.ly = -14 - Math.sin(Math.PI * p) * 8; T.squint = .7; }
+  else T.squint = pointer.hover?.dataset.app === 'soon' ? .9 : (dark && t - lastMove > 15000 ? .2 : .5);
+  T.happy = (mood === 'happy' && t < moodUntil) || pointer.hover?.dataset.app === 'mraq' ? .55 : 0;
+  T.wide = pointer.hover?.dataset.app === 'mraq' ? 1 : 0;
+  // v noci po chvíli nečinnosti ospalej
+  const sleepy = dark && t - lastMove > 15000 && !pointer.hover;
+  T.open = sleepy ? .45 : 1;
+  // mrkání
+  if (t > nextBlink) { blinkT = t; nextBlink = t + 1800 + Math.random() * 3800; if (Math.random() < .2) nextBlink = t + 260; }
+  const bk = (t - blinkT) / 170; const blink = bk >= 0 && bk < 1 ? Math.abs(Math.cos(bk * Math.PI)) : 1;
+  const f = 1 - Math.pow(.0015, dt / 1000), f2 = 1 - Math.pow(.02, dt / 1000);
+  E.lx = lerp(E.lx, T.lx, f * 1.6 > 1 ? 1 : f * 1.6); E.ly = lerp(E.ly, T.ly, Math.min(1, f * 1.6));
+  E.squint = lerp(E.squint, T.squint, f2); E.happy = lerp(E.happy, T.happy, f2); E.wide = lerp(E.wide, T.wide, f2);
+  E.open = lerp(E.open, T.open, f2) * blink;
+  E.hop = Math.max(0, E.hop - dt / 700);
+}
+
+/* ===== kamera = paralaxa (myš / prst / náklon telefonu) ===== */
+const cam = { x: 0, y: 0 };
+function frame(now) {
+  const dt = Math.min(50, now - (frame.l || now)); frame.l = now;
+  pointer.nx = lerp(pointer.nx, pointer.tnx, 1 - Math.pow(.02, dt / 1000));
+  pointer.ny = lerp(pointer.ny, pointer.tny, 1 - Math.pow(.02, dt / 1000));
+  const drift = now / 1000;
+  cam.x = pointer.nx * .07 + Math.sin(drift / 7) * .012;
+  cam.y = pointer.ny * .05 + Math.cos(drift / 9) * .008;
+  behave(now, dt);
+
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const F = Math.min(W, H * .62) * (W > 700 ? 1.2 : 1), CY = H * .45;
+  const proj = (x, y, z) => ({ x: W / 2 + (x - cam.x) * F / z, y: CY + (y - cam.y) * F / z, s: F / z });
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, rgba(sky[0])); gr.addColorStop(.52, rgba(sky[1])); gr.addColorStop(1, rgba(sky[2]));
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  const sp = proj(.9, -1.3, 6);
+  const sg = g.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, Math.max(W, H) * .8);
+  sg.addColorStop(0, rgba(glow, dark ? .25 : .55)); sg.addColorStop(1, rgba(glow, 0)); g.fillStyle = sg; g.fillRect(0, 0, W, H);
+  if (dark) for (const [x, y, z, a, ph] of STARS) { const p = proj(x, y, z); g.fillStyle = `rgba(255,255,255,${a * (.55 + .45 * Math.sin(now / 900 + ph))})`; g.beginPath(); g.arc(p.x, p.y, .7 + a * .6, 0, 7); g.fill(); }
+
+  const items = PUFFS.map((p) => ({ z: p[2], p })).concat([{ z: 1, mraq: true }]).sort((a, b) => b.z - a.z);
+  for (const it of items) {
+    if (it.mraq) { drawMraq(now); continue; }
+    const p0 = it.p;
+    p0[0] += p0[5] * dt / 1000 * (1 / p0[2]) * 2; // vítr: blízké rychleji
+    const span = 2.2 * p0[2] + p0[3]; if (p0[0] > span / 2) p0[0] -= span;
+    const [x, y, z, s, k] = p0, p = proj(x, y, z);
+    const w = s * p.s, h = w * SH / SW;
+    const far = clamp((z - 1.2) / 2.4), a = (1 - far * .5) * (z < 1 ? .95 : .85);
+    const lv = clamp(Math.abs(Math.log(z)) / .9, 0, 2), i0 = Math.floor(Math.min(lv, 1.999)), f = lv - i0;
+    g.globalAlpha = a * (1 - f); g.drawImage(sprites[k][i0], p.x - w / 2, p.y - h / 2, w, h);
+    g.globalAlpha = a * f; g.drawImage(sprites[k][i0 + 1], p.x - w / 2, p.y - h / 2, w, h);
+    g.globalAlpha = 1;
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ===== vstupy ===== */
+function setPointer(x, y) { pointer.x = x; pointer.y = y; pointer.tnx = (x / W - .5) * 2; pointer.tny = (y / H - .5) * 2; lastMove = performance.now(); }
+addEventListener('pointermove', (e) => setPointer(e.clientX, e.clientY));
+addEventListener('pointerdown', (e) => {
+  setPointer(e.clientX, e.clientY);
+  const r = mraqRect();
+  if (!e.target.closest('a,.app,.pick') && Math.hypot(e.clientX - r.cx, e.clientY - r.cy) < r.s * .45) { // šťouchnutí do Mraqa
+    E.hop = 1; say(LINES.poke); navigator.vibrate?.(8);
+  }
+});
+addEventListener('pointerleave', () => { pointer.tnx = 0; pointer.tny = 0; });
+// náklon telefonu (Android hned; iOS se zeptá po prvním ťuknutí)
+function onTilt(e) { if (e.gamma == null) return; pointer.tnx = clamp(e.gamma / 25, -1, 1); pointer.tny = clamp((e.beta - 45) / 25, -1, 1); }
+addEventListener('deviceorientation', onTilt);
+addEventListener('click', () => { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); }, { once: true });
+document.querySelectorAll('[data-app]').forEach((el) => {
+  el.addEventListener('pointerenter', () => { pointer.hover = el; say(LINES[el.dataset.app]); });
+  el.addEventListener('pointerleave', () => { if (pointer.hover === el) pointer.hover = null; });
+  if (el.dataset.app === 'soon') el.addEventListener('click', () => { pointer.hover = el; say(LINES.soon); setTimeout(() => { if (pointer.hover === el) pointer.hover = null; }, 1600); });
+  if (el.dataset.app === 'mraq') el.addEventListener('click', (e) => { // Mraq radostně nadskočí a pak se jde
+    e.preventDefault(); E.hop = 1; mood = 'happy'; moodUntil = performance.now() + 900;
+    setTimeout(() => { location.href = el.href; }, 520);
+  });
+});
+
+setTod({ den: 'day', rano: 'morning', vecer: 'dusk', noc: 'night' }[new URLSearchParams(location.search).get('doba')] || 'auto');
+setInterval(() => { if (tod === 'auto') setTod('auto'); }, 10 * 60e3);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

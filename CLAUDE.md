@@ -29,6 +29,8 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - `manifest.webmanifest`, `icons/` – PWA
 - `push/` – **server pro notifikace** (Cloudflare Worker `mraq-push`, nasazuje se sám z GitHubu přes Workers Builds, root `/push`). API na https://mraq-api.jendovyapky.eu (`/vapid`, `/subscribe`, `/unsubscribe`, `/test`). Cron každých 15 min: ranní shrnutí v nastavený čas, déšť do hodiny (7–22 h, max 1× za 3 h), extrémy na zítřek v 19:00. Web Push je ručně přes WebCrypto (VAPID + aes128gcm). VAPID klíče si Worker vygeneroval sám a má je v KV `mraq-push` (klíč `vapid`) – **nemazat**, jinak přestanou fungovat všechny přihlášené telefony. Texty bere z `hlasky.txt` z webu.
 
+- `web/` – **rozcestník jendovyapky.eu** (samostatný Cloudflare Pages projekt `jendovyapky-web`, výstupní složka `web`). Detaily v `web/CLAUDE.md`. Nikde nepoužívat slogan „appky pro líný lidi“.
+
 ## Data (vše zdarma, bez klíčů)
 - Předpověď: Open-Meteo `api.open-meteo.com/v1/forecast`, `best_match` (pro ČR ICON-D2 2 km + ICON-EU + ECMWF), `past_days=1` kvůli srovnání se včerejškem.
 - Srážky po 15 min: Open-Meteo `minutely_15` (samostatný request, smí selhat).
@@ -66,5 +68,4 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 
 ## Nápady na příště
 - Hlášky klidně drzejší (Honza zvažuje).
-- Rozcestník na `jendovyapky.eu` se všemi appkami.
 - Další appky jako subdomény `*.jendovyapky.eu`, každá vlastní repo pod `jendovyapky`.
