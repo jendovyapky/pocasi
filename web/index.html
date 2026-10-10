@@ -34,6 +34,9 @@ a { color: inherit; text-decoration: none; }
 .soon .ico { background: rgba(255,255,255,.08); border: 1.5px dashed var(--line); box-shadow: none; display: grid; place-items: center; }
 .soon .ico svg { width: 34px; height: 34px; }
 .soon:hover .ico { transform: rotate(4deg); }
+.soon .ico:has(img) { background: none; border: 0; }
+.soon .ico img { filter: grayscale(1) brightness(.9); opacity: .45; }
+.wip { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,.55); color: rgba(255,255,255,.85); font: 500 8.5px/1.2 'Geist Mono', monospace; letter-spacing: .02em; white-space: nowrap; }
 
 /* bublina Mraqa */
 .say { position: fixed; z-index: 3; padding: 9px 13px; border-radius: 16px; background: rgba(20,21,30,.8); color: #fff; font: 500 13.5px Geist; max-width: 230px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .3s, transform .3s var(--ease); pointer-events: none; }
@@ -49,7 +52,7 @@ a { color: inherit; text-decoration: none; }
   <h1 class="head">JENDOVY APKY</h1>
   <nav class="dock" aria-label="Appky">
     <a class="app" data-app="mraq" href="https://mraq.jendovyapky.eu"><div class="ico"><img alt="" src="icons/mraq.png"></div>Mraq</a>
-    <div class="app soon" data-app="soon" aria-label="Další appka brzy"><div class="ico"><svg viewBox="0 0 32 42" fill="currentColor" aria-hidden="true"><circle cx="10" cy="2" r="2.3"/><circle cx="16" cy="2" r="2.3"/><circle cx="22" cy="2" r="2.3"/><circle cx="4" cy="8" r="2.3"/><circle cx="28" cy="8" r="2.3"/><circle cx="28" cy="14" r="2.3"/><circle cx="16" cy="20" r="2.3"/><circle cx="22" cy="20" r="2.3"/><circle cx="16" cy="26" r="2.3"/><circle cx="16" cy="38" r="2.3"/></svg></div>Brzy</div>
+    <div class="app soon" data-app="soon" role="img" aria-label="Klapqa, na appce se pracuje"><div class="ico"><img alt="" src="icons/klapqa.png"><span class="wip">pracuje se</span></div>Klapqa</div>
   </nav>
 </main>
 
