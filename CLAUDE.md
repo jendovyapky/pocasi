@@ -10,6 +10,7 @@ Celá v **češtině**, trochu vtipná, „pro líné“: otevřu a hned vím, c
 - Cloudflare Pages je napojený na tohle repo. **Každý push do `main` se sám nasadí** během ~1 min.
 - Žádný build: statické soubory z kořene repa.
 - Cloudflare účet: Jendovyapky (nový, samostatný). Doména `jendovyapky.eu` koupená na Webglobe, DNS spravuje Cloudflare.
+- Ve vestavěném prohlížeči (Honzův Mac) je přihlášený GitHub i Cloudflare účet Jendovyapky → nové repo pod `jendovyapky` nebo Pages projekt jde založit tam (z terminálu nové repo vytvořit nejde).
 - Po větší změně zvýšit `VERSION` v `sw.js` (např. `mraq-v2`), ať se telefonům stáhne nová verze.
 
 ## Přísná pravidla
