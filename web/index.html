@@ -38,6 +38,31 @@ a { color: inherit; text-decoration: none; }
 .soon .ico img { filter: grayscale(1) brightness(.9); opacity: .45; }
 .wip { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,.55); color: rgba(255,255,255,.85); font: 500 8.5px/1.2 'Geist Mono', monospace; letter-spacing: .02em; white-space: nowrap; }
 
+/* Klapqa beta: 5× ťuknout na šedou ikonku → vyletí klapka s očima, kód „beta“ → klapne a clona se zavře */
+.slate-bg { position: fixed; inset: 0; z-index: 4; background: radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,.55), rgba(0,0,0,.25)); opacity: 0; pointer-events: none; transition: opacity .4s; }
+.slate-bg.on { opacity: 1; pointer-events: auto; }
+.slate { position: fixed; z-index: 5; left: 50%; bottom: calc(max(30px, calc(env(safe-area-inset-bottom) + 14px)) + 116px); width: 248px; margin-left: -124px;
+  display: flex; flex-direction: column; align-items: center; opacity: 0; pointer-events: none; transform-origin: var(--ox, 50%) 120%; }
+.slate.on { opacity: 1; pointer-events: auto; animation: slateIn .62s cubic-bezier(.2,1.35,.35,1) both; }
+.slate.off { animation: slateOut .32s cubic-bezier(.5,0,.8,.3) both; }
+@keyframes slateIn { from { opacity: 0; transform: translate(var(--dx, 0), 150px) scale(.18) rotate(10deg); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes slateOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(var(--dx, 0), 150px) scale(.18) rotate(10deg); } }
+.slate { filter: drop-shadow(0 22px 40px rgba(0,0,0,.45)); }
+.slate canvas { width: 248px; height: 236px; display: block; pointer-events: none; }
+.slate .tail { position: absolute; left: 0; top: calc(100% - 64px); width: 232px; height: 102px; z-index: -1; pointer-events: none; }
+.slate form { position: relative; width: 192px; display: flex; flex-direction: column; gap: 8px; padding: 2px 10px 12px; border-radius: 0 0 14px 14px; background: #F2EFE8; }
+.slate .row { display: flex; justify-content: space-between; font: 600 9px/1 'Geist Mono', monospace; letter-spacing: .12em; color: rgba(20,20,20,.45); }
+.slate .field { display: flex; gap: 6px; }
+.slate input { flex: 1; min-width: 0; height: 40px; padding: 0 9px; border-radius: 10px; border: 1.5px solid rgba(20,20,20,.18); background: #fff; color: #141414; font: 600 16px 'Geist Mono', monospace; letter-spacing: .12em; outline: none; transition: border-color .2s; }
+.slate input:focus { border-color: #141414; }
+.slate input::placeholder { color: rgba(20,20,20,.3); letter-spacing: .06em; }
+.slate button { height: 40px; padding: 0 12px; border-radius: 10px; border: 0; background: #141414; color: #F5C542; font: 700 14px Geist; cursor: pointer; transition: transform .15s; }
+.slate button:active { transform: scale(.94); }
+.slate.bad form { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-7px) rotate(-1deg); } 40%, 80% { transform: translateX(7px) rotate(1deg); } }
+.iris { position: fixed; inset: 0; z-index: 6; background: #0B0C0E; clip-path: circle(0 at var(--ix, 50%) var(--iy, 50%)); pointer-events: none; transition: clip-path .55s cubic-bezier(.7,0,.3,1); }
+.iris.on { clip-path: circle(150vmax at var(--ix, 50%) var(--iy, 50%)); pointer-events: auto; }
+
 /* bublina Mraqa */
 .say { position: fixed; z-index: 3; padding: 9px 13px; border-radius: 16px; background: rgba(20,21,30,.8); color: #fff; font: 500 13.5px Geist; max-width: 230px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .3s, transform .3s var(--ease); pointer-events: none; }
 .say.on { opacity: 1; transform: none; }
@@ -47,6 +72,16 @@ a { color: inherit; text-decoration: none; }
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
 <div class="say" id="say" aria-live="polite"></div>
+<div class="slate-bg" id="slateBg"></div>
+<div class="slate" id="slate" role="dialog" aria-label="Klapqa – beta testování" aria-hidden="true">
+  <canvas id="slateC" aria-hidden="true"></canvas>
+  <form id="beta" autocomplete="off">
+    <div class="row"><span>KLAPQA</span><span>BETA · TAKE 1</span></div>
+    <svg class="tail" viewBox="34 120 160 70" aria-hidden="true"><path d="M140 150c8 14 18 22 32 22c4 0 7-2 9-5" fill="none" stroke="#F2EFE8" stroke-width="16" stroke-linecap="round"/></svg>
+    <div class="field"><input id="betaCode" name="code" placeholder="kód" aria-label="Kód pro beta testování" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="submit">Akce!</button></div>
+  </form>
+</div>
+<div class="iris" id="iris"></div>
 
 <main class="ui" id="ui">
   <h1 class="head">JENDOVY APKY</h1>
@@ -280,10 +315,125 @@ addEventListener('pointerleave', () => { pointer.tnx = 0; pointer.tny = 0; });
 function onTilt(e) { if (e.gamma == null) return; pointer.tnx = clamp(e.gamma / 25, -1, 1); pointer.tny = clamp((e.beta - 45) / 25, -1, 1); }
 addEventListener('deviceorientation', onTilt);
 addEventListener('click', () => { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); }, { once: true });
+// ——— Klapqa beta: 5× ťuknout na šedou ikonku → vyletí klapka (jako úvod Klapqy), kód „beta“ → klapne, clona → Klapqa ———
+const KLAPQA = 'https://klapqa.jendovyapky.eu';
+let taps = [];
+const betaOk = () => { try { return localStorage.getItem('beta.klapqa') === '1'; } catch { return false; } };
+const slate = $('#slate'), slateBg = $('#slateBg'), betaForm = $('#beta'), betaInput = $('#betaCode'), iris = $('#iris');
+const sc = $('#slateC'), sx = sc.getContext('2d');
+const SL = { on: false, t0: 0, arm: 0, armV: 0, armT: 0, lx: 0, ly: 0, open: 1, happy: 0, blinkAt: 0, clapAt: -1e9, flash: 0, raf: 0 };
+const SPITCH = 4.2, SDOT = 3.4;
+function slateDots(x0, y0, w, h, open, happy) {
+  const dots = [], hh = Math.max(.1, h * open);
+  if (open < .16) { for (let k = -2; k <= 1; k++) dots.push([x0 + (k + .5) * SPITCH, y0 + SPITCH]); return dots; }
+  const n = Math.ceil(w / SPITCH) + 1, m = Math.ceil(h / SPITCH) + 1, r = Math.min(w, hh) * .95;
+  for (let j = -m; j <= m; j++) for (let k = -n; k <= n; k++) {
+    const x = x0 + (k + .5) * SPITCH, y = y0 + j * SPITCH, dx = Math.abs(x - x0), dy = Math.abs(y - y0);
+    if (dx > w || dy > hh) continue;
+    if (dx > w - r && dy > hh - r && (dx - (w - r)) ** 2 + (dy - (hh - r)) ** 2 > r * r) continue;
+    if (happy) { const ay = y0 + hh * .7, ry = hh * 1.35, t = SPITCH * 1.15; if (y > ay + .1) continue;
+      const o = (dx / w) ** 2 + ((y - ay) / ry) ** 2, i = (dx / Math.max(1, w - t)) ** 2 + ((y - ay) / Math.max(1, ry - t)) ** 2; if (o > 1.1 || i < 1) continue; }
+    dots.push([x, y]);
+  }
+  return dots;
+}
+function rrect(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+function drawSlate(now) {
+  const dpr = Math.min(2, devicePixelRatio || 1), cw = 248, ch = 236;
+  if (sc.width !== cw * dpr) { sc.width = cw * dpr; sc.height = ch * dpr; }
+  const x = sx; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, cw, ch);
+  const shake = Math.max(0, 1 - (now - SL.clapAt) / 260), k = 1.45;
+  x.save(); x.translate(124 + (Math.random() - .5) * 5 * shake, 178 + (Math.random() - .5) * 3 * shake); x.scale(k, k); x.translate(-100, -100);
+  // horní část těla (zbytek dělá formulář pod tím)
+  x.fillStyle = '#F2EFE8'; x.beginPath(); x.moveTo(34, 141); x.lineTo(34, 98); x.arcTo(34, 88, 44, 88, 10); x.lineTo(156, 88); x.arcTo(166, 88, 166, 98, 10); x.lineTo(166, 141); x.closePath(); x.fill();
+  x.fillStyle = '#141414'; rrect(x, 34, 86, 132, 4, 2); x.fill();
+  // rameno klapky
+  x.save(); x.translate(36, 84); x.rotate(SL.arm); x.translate(-36, -84);
+  x.fillStyle = '#F5C542'; rrect(x, 34, 56, 132, 26, 6); x.fill();
+  x.fillStyle = '#141414';
+  for (const s of [52, 88, 124]) { x.beginPath(); x.moveTo(s, 56); x.lineTo(s + 18, 56); x.lineTo(s + 4, 82); x.lineTo(s - 14, 82); x.closePath(); x.fill(); }
+  x.restore();
+  x.fillStyle = '#141414'; x.beginPath(); x.arc(40, 85, 3.4, 0, 7); x.fill();
+  // záblesk při klapnutí
+  if (SL.flash > 0) { x.fillStyle = `rgba(255,255,255,${SL.flash})`; x.beginPath(); x.ellipse(100, 84, 70 * (1.4 - SL.flash), 5, 0, 0, 7); x.fill(); }
+  // oči
+  x.fillStyle = '#141414';
+  for (const ex of [80, 120]) for (const [px, py] of slateDots(ex + SL.lx * 5, 116 + SL.ly * 4, 9, 13, SL.open, SL.happy > .5)) { x.beginPath(); x.arc(px, py, SDOT / 2, 0, 7); x.fill(); }
+  x.restore();
+}
+function slateFrame(now) {
+  if (!SL.on) { SL.raf = 0; return; }
+  const t = now - SL.t0;
+  // rameno: pružina k cíli (otevřené po příletu, při psaní cuká, při klapnutí zavřené)
+  if (t < 260) SL.armT = 0; else if (SL.armT === 0 && !SL.done) SL.armT = -.62;
+  SL.armV += ((SL.armT + Math.sin(now / 700) * .025 * (SL.done ? 0 : 1)) - SL.arm) * .22; SL.armV *= .62; SL.arm += SL.armV;
+  if (SL.done && SL.arm > 0) { SL.arm = 0; SL.armV *= -.35; }
+  // oči: sledují prst/myš, při psaní koukají dolů na kód, občas mrknou
+  const b = sc.getBoundingClientRect(), typing = document.activeElement === betaInput && now - (SL.typedAt || 0) < 1400;
+  let tx = 0, ty = .5;
+  if (!typing && pointer.x != null) { tx = clamp((pointer.x - (b.left + b.width / 2)) / 160, -1, 1); ty = clamp((pointer.y - (b.top + b.height / 2)) / 160, -1, 1); }
+  if (typing) { tx = clamp((betaInput.value.length - 2.5) / 4, -.8, .8); ty = 1; }
+  SL.lx += (tx - SL.lx) * .18; SL.ly += (ty - SL.ly) * .18;
+  if (now > SL.blinkAt) SL.blinkAt = now + 2200 + Math.random() * 2600;
+  const bk = (SL.blinkAt - now) < 150 ? Math.abs(Math.cos((150 - (SL.blinkAt - now)) / 150 * Math.PI)) : 1;
+  const sq = now < (SL.badUntil || 0) ? .3 : 1;
+  SL.open += (bk * sq - SL.open) * (bk < 1 ? 1 : .25);
+  SL.flash = Math.max(0, SL.flash - .07);
+  drawSlate(now);
+  SL.raf = requestAnimationFrame(slateFrame);
+}
+function iconDelta() {
+  const ic = document.querySelector('.soon .ico').getBoundingClientRect(), s = slate.getBoundingClientRect();
+  slate.style.setProperty('--dx', `${Math.round(ic.left + ic.width / 2 - (s.left + s.width / 2))}px`);
+}
+function openBeta() {
+  if (SL.on) return;
+  Object.assign(SL, { on: true, t0: performance.now(), arm: 0, armV: 0, armT: 0, done: false, happy: 0, open: 1, lx: 0, ly: .5, blinkAt: performance.now() + 900 });
+  slate.classList.remove('off', 'bad'); slate.classList.add('on'); slate.setAttribute('aria-hidden', 'false'); slateBg.classList.add('on'); iconDelta();
+  betaInput.value = ''; setTimeout(() => betaInput.focus({ preventScroll: true }), 380);
+  if (!SL.raf) SL.raf = requestAnimationFrame(slateFrame);
+  E.wide = 1; navigator.vibrate?.(12);
+}
+function closeBeta() {
+  if (!SL.on || SL.done) return;
+  betaInput.blur(); slate.classList.remove('on', 'bad'); slate.classList.add('off'); slateBg.classList.remove('on'); slate.setAttribute('aria-hidden', 'true');
+  setTimeout(() => { SL.on = false; slate.classList.remove('off'); }, 330);
+}
+function clap(full) {
+  SL.clapAt = performance.now(); SL.flash = full ? 1 : .5;
+  SL.armT = full ? 0 : -.25; SL.armV = .25;
+  if (!full) setTimeout(() => { if (!SL.done) SL.armT = -.62; }, 260);
+}
+betaInput.addEventListener('input', () => { SL.typedAt = performance.now(); SL.armV -= .05; });
+betaForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (SL.done) return;
+  if (betaInput.value.trim().toLowerCase() === 'beta') {
+    try { localStorage.setItem('beta.klapqa', '1'); } catch {}
+    SL.done = true; betaInput.blur(); clap(true); SL.happy = 1; navigator.vibrate?.(20);
+    E.hop = 1; mood = 'happy'; moodUntil = performance.now() + 1400;
+    const b = sc.getBoundingClientRect();
+    iris.style.setProperty('--ix', `${b.left + b.width / 2}px`); iris.style.setProperty('--iy', `${b.top + b.height * .8}px`);
+    setTimeout(() => iris.classList.add('on'), 520);
+    setTimeout(() => { location.href = KLAPQA; }, 1120);
+  } else {
+    clap(false); SL.badUntil = performance.now() + 700;
+    slate.classList.remove('bad'); void slate.offsetWidth; slate.classList.add('bad'); betaInput.select(); navigator.vibrate?.([10, 40, 10]);
+  }
+});
+slateBg.addEventListener('pointerdown', closeBeta);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBeta(); });
+addEventListener('pageshow', (e) => { if (e.persisted) { iris.classList.remove('on'); SL.done = false; SL.on = false; slate.classList.remove('on'); slateBg.classList.remove('on'); } });
+
 document.querySelectorAll('[data-app]').forEach((el) => {
   el.addEventListener('pointerenter', () => { pointer.hover = el; say(LINES[el.dataset.app]); });
   el.addEventListener('pointerleave', () => { if (pointer.hover === el) pointer.hover = null; });
-  if (el.dataset.app === 'soon') el.addEventListener('click', () => { pointer.hover = el; say(LINES.soon); setTimeout(() => { if (pointer.hover === el) pointer.hover = null; }, 1600); });
+  if (el.dataset.app === 'soon') el.addEventListener('click', () => {
+    if (betaOk()) { E.hop = 1; setTimeout(() => { location.href = KLAPQA; }, 420); return; }   // beta tester už kód zadal
+    pointer.hover = el; say(LINES.soon); setTimeout(() => { if (pointer.hover === el) pointer.hover = null; }, 1600);
+    const now = performance.now(); taps = taps.filter((x) => now - x < 2500); taps.push(now);
+    if (taps.length >= 5) { taps = []; openBeta(); }
+  });
   if (el.dataset.app === 'mraq') el.addEventListener('click', (e) => { // Mraq radostně nadskočí a pak se jde
     e.preventDefault(); E.hop = 1; mood = 'happy'; moodUntil = performance.now() + 900;
     setTimeout(() => { location.href = el.href; }, 520);
