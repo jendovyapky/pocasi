@@ -10,7 +10,7 @@ Složka `web/` v repu `jendovyapky/pocasi` (jako `push/`), vlastní Cloudflare P
 
 ## Soubory
 - `index.html` – celá stránka (CSS + JS uvnitř). Nadpis JENDOVY APKY (Doto), Mraq uprostřed, dole skleněný dok s ikonkami appek.
-- `icons/mraq.png` – ikonka Mraqa (kopie z repa pocasi), `icons/klapqa.png` – ikonka Klapqa (z repa `jendovyapky/klapqa`), `icons/favicon.svg`.
+- `icons/mraq.png` – ikonka Mraqa (kopie z repa pocasi), `icons/klapqa.png` – ikonka Klapqa (z repa `jendovyapky/klapqa`), `icons/quba.svg` + `icons/quba.png` – ikonka Quest Castu (Quba = bílé brýle Questu s tečkovýma očima z repa `jendovyapky/quest`; PNG 192 px renderované Playwrightem; na rozcestníku je popisek „Quba“ – Honza chtěl; na quest.jendovyapky.eu se jméno dál neukazuje), `icons/favicon.svg`.
 
 ## Jak to funguje
 - Canvas scéna jako úvodní animace Mraqa: obloha podle denní doby (stejné palety `PAL` jako Mraq), mraky ve 3 hloubkách s hloubkou ostrosti, vítr, v noci hvězdy.
@@ -21,6 +21,7 @@ Složka `web/` v repu `jendovyapky/pocasi` (jako `push/`), vlastní Cloudflare P
   - najetí / ťuknutí na Klapqa (zatím šedá, neklikací, „pracuje se“, `data-app="soon"`) → přimhouří oko: „Jak brzo? Brzo.“
   - šťouchnutí do Mraqa → nadskočí: „Hej, co zkoušíš?“
   - klik na Mraq → nadskočí a pak přesměruje na https://mraq.jendovyapky.eu
+  - najetí na Qubu → „Chceš streamovat brejle?“, klik → Mraq nadskočí a pak https://quest.jendovyapky.eu
 - **Klapqa beta:** 5× ťuknout na šedou Klapqa (do 2,5 s) → z ikonky vyletí klapka (canvas, stejná kresba jako úvod Klapqy: žluté rameno, tečkové oči sledují prst, při psaní koukají na kód, mrkají) a pod ní papírové tělo s polem na kód a tlačítkem „Akce!“. Špatný kód = klapka cukne, oči přimhouří, zatřese se. Kód `beta` (velikost písmen nevadí) = klapka klapne (záblesk, otřes, oči ∩), Mraq nadskočí, tmavá clona se zavře z klapky a pak https://klapqa.jendovyapky.eu (tam naváže úvod Klapqy). Zařízení si to pamatuje (`localStorage` `beta.klapqa`), pak stačí jedno ťuknutí. Ikonka zůstává šedá „pracuje se“. Mimo / Escape = klapka zaletí zpátky do ikonky.
 - `?doba=rano|den|vecer|noc` – náhled jiné denní doby.
 
