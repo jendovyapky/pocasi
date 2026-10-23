@@ -89,7 +89,7 @@ a { color: inherit; text-decoration: none; }
   <nav class="dock" aria-label="Appky">
     <a class="app" data-app="mraq" href="https://mraq.jendovyapky.eu"><div class="ico"><img alt="" src="icons/mraq.png"></div>Mraq</a>
     <a class="app" data-app="quest" href="https://quest.jendovyapky.eu"><div class="ico"><img alt="" src="icons/quba.png"></div>Quba</a>
-    <a class="app" data-app="duqh" href="https://duqh.pages.dev"><div class="ico"><img alt="" src="icons/duqh.png"></div>Duqh</a>
+    <a class="app" data-app="phasmapp" href="https://phasmapp.pages.dev"><div class="ico"><img alt="" src="icons/phasmapp.png"></div>Phasmapp</a>
     <div class="app soon" data-app="soon" role="img" aria-label="Klapqa, na appce se pracuje"><div class="ico"><img alt="" src="icons/klapqa.png"><span class="wip">pracuje se</span></div>Klapqa</div>
   </nav>
 </main>
@@ -220,7 +220,7 @@ function drawMraq(t) {
 }
 
 /* chování: sleduje prst/myš, sám od sebe se rozhlíží, mrká, občas udělá výraz */
-const LINES = { mraq: 'Klikni. Řeknu ti, co si vzít na sebe.', quest: 'Chceš streamovat brejle?', duqh: 'Bojíš se duchů? Já jim aspoň rozumím.', soon: 'Jak brzo? Brzo.', poke: 'Hej, co zkoušíš?' };
+const LINES = { mraq: 'Klikni. Řeknu ti, co si vzít na sebe.', quest: 'Chceš streamovat brejle?', phasmapp: 'Bojíš se duchů? Já jim aspoň rozumím.', soon: 'Jak brzo? Brzo.', poke: 'Hej, co zkoušíš?' };
 let sayT;
 function say(text) {
   const b = $('#say'); b.textContent = text; b.classList.add('on');
@@ -437,7 +437,7 @@ document.querySelectorAll('[data-app]').forEach((el) => {
     const now = performance.now(); taps = taps.filter((x) => now - x < 2500); taps.push(now);
     if (taps.length >= 5) { taps = []; openBeta(); }
   });
-  if (el.dataset.app === 'mraq' || el.dataset.app === 'quest' || el.dataset.app === 'duqh') el.addEventListener('click', (e) => { // Mraq radostně nadskočí a pak se jde
+  if (el.dataset.app === 'mraq' || el.dataset.app === 'quest' || el.dataset.app === 'phasmapp') el.addEventListener('click', (e) => { // Mraq radostně nadskočí a pak se jde
     e.preventDefault(); E.hop = 1; mood = 'happy'; moodUntil = performance.now() + 900;
     setTimeout(() => { location.href = el.href; }, 520);
   });
